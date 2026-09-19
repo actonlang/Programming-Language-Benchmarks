@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 90
     env:
       PYTHONINTMAXSTRDIGITS: "0"
+      GOTOOLCHAIN: local
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -32,7 +33,7 @@ jobs:
           dotnet-version: "9.0.x"
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.26.x"
           cache: false
       - uses: dtolnay/rust-toolchain@stable
       - name: Install native dependencies
