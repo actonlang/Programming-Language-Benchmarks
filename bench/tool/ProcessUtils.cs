@@ -351,15 +351,13 @@ namespace BenchTool
             sw.Stop();
             cts.Cancel();
 
-            m.Elapsed = TimeSpan.FromMilliseconds(0);
-
-            // report run time only for successful runs
-            if (ret >= 0)
+            await t.ConfigureAwait(false);
+            if (ret != 0)
             {
-                m.Elapsed = sw.Elapsed;
+                throw new InvalidOperationException($"Benchmark exited with code {ret}: {startInfo.FileName} {startInfo.Arguments}");
             }
 
-            await t.ConfigureAwait(false);
+            m.Elapsed = sw.Elapsed;
             return m;
         }
 

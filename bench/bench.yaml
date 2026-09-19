@@ -17,7 +17,9 @@ problems:
         output: 5_out
     tests:
       - input: 10
+        timeout_seconds: 120
       - input: 12
+        timeout_seconds: 120
   - name: binarytrees
     unittests:
       - input: 6
@@ -26,7 +28,9 @@ problems:
         output: 10_out
     tests:
       - input: 15
+        timeout_seconds: 120
       - input: 18
+        timeout_seconds: 120
   - name: merkletrees
     unittests:
       - input: 9
@@ -35,7 +39,9 @@ problems:
         output: 10_out
     tests:
       - input: 15
+        timeout_seconds: 120
       - input: 17
+        timeout_seconds: 120
   - name: nbody
     unittests:
       - input: 1000
@@ -63,7 +69,9 @@ problems:
         output: 30_out
     tests:
       - input: 4000
+        timeout_seconds: 120
       - input: 8000
+        timeout_seconds: 120
   - name: edigits
     unittests:
       - input: 227
@@ -72,7 +80,9 @@ problems:
         output: 1000_out
     tests:
       - input: 100000
+        timeout_seconds: 120
       - input: 250001
+        timeout_seconds: 120
   - name: mandelbrot
     unittests:
       - input: 1
