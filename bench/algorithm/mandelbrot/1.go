@@ -19,13 +19,14 @@ func main() {
 	inv := 2.0 / float64(size)
 	xloc := make([][8]float64, chunk_size)
 	for i := 0; i < size; i++ {
-		xloc[i/8][i%8] = float64(i)*inv - 1.5
+		// The explicit conversion preserves rounding before subtraction.
+		xloc[i/8][i%8] = float64(float64(i)*inv) - 1.5
 	}
 	fmt.Printf("P4\n%d %d\n", size, size)
 
 	pixels := make([]byte, size*chunk_size)
 	for chunk_id := 0; chunk_id < size; chunk_id++ {
-		ci := float64(chunk_id)*inv - 1.0
+		ci := float64(float64(chunk_id)*inv) - 1.0
 		offset := chunk_id * chunk_size
 		for i := 0; i < chunk_size; i++ {
 			r := mbrot8(&xloc[i], ci)
