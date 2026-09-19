@@ -28,6 +28,18 @@ benchmark script additionally holds `~/.local/state/acton-perf.lock` while
 building, checking, and measuring. Other measurements on that host must use the
 same lock. New commits cancel superseded runs of this workflow.
 
+`actest1` runs `.github/runner-cleanup.sh` before and after each job, including
+jobs from the Acton repository. It removes untracked checkout output after
+artifact uploads, clears APT downloads, and resets compiler caches when they
+exceed their limits: 8 GiB for Acton, 2 GiB for Zig, and 4 GiB per Rust target
+directory. The next job also clears leftovers from an interrupted run.
+The hook takes the same performance lock and preserves tracked source files.
+
+To install or update it on `actest1`, copy it to
+`/opt/actest1/runner-cleanup.sh` with executable permissions. Set both
+`ACTIONS_RUNNER_HOOK_JOB_STARTED` and `ACTIONS_RUNNER_HOOK_JOB_COMPLETED` to that
+absolute path in the runner service environment, then restart the idle service.
+
 The initial suite selection is in `.github/bench.sh`. Rust uses the stable
 configuration; `--compilers rustc:stable` excludes the separate nightly entry.
 Clang and Rust optimize for the CPU on which the benchmarks run.
