@@ -3,6 +3,8 @@ import { $content } from '@nuxt/content'
 import _ from 'lodash'
 import { getLangBenchResults } from './contentUtils'
 
+const basePath = process.env.SITE_BASE_PATH || '/'
+
 const config: NuxtConfig = {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
@@ -23,7 +25,9 @@ const config: NuxtConfig = {
         content: 'benchmarks for programming languages and compilers',
       },
     ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    link: [
+      { rel: 'icon', type: 'image/x-icon', href: `${basePath}favicon.ico` },
+    ],
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
@@ -81,6 +85,7 @@ const config: NuxtConfig = {
     plugins: [require('@tailwindcss/forms')],
   },
   router: {
+    base: basePath,
     async extendRoutes(routes, resolve) {
       const langBenchResults = await getLangBenchResults($content)
 

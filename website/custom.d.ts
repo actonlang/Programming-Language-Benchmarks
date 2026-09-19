@@ -27,6 +27,10 @@ type BenchResult = {
   timeout?: boolean
 
   // appveyorBuildId: string,
+  githubRepository?: string
+  githubSha?: string
+  githubRunAttempt?: string
+  runnerName?: string
   githubRunId: string
   buildLog: {
     compilerVersion: string

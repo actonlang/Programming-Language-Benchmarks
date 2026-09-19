@@ -13,7 +13,7 @@
         >
           <a
             v-if="!isLinkActive(i.lang, '')"
-            :href="`/${i.lang}`"
+            :href="$router.resolve(`/${i.lang}`).href"
             :class="getLinkClass(i.lang, '')"
             >{{ i.langDisplay }}</a
           >
@@ -50,7 +50,7 @@
         <p>
           <a
             class="underline bold text-blue-500"
-            href="https://github.com/hanabi1224/Programming-Language-Benchmarks"
+            href="https://github.com/actonlang/Programming-Language-Benchmarks"
             target="_blank"
             >CONTRIBUTIONS</a
           >
@@ -122,7 +122,9 @@
 
       <div v-for="test in testOptions" :key="test">
         <h2 class="text-2xl my-5 mb-2 underline text-blue-500">
-          <a :id="test" :href="`/problem/${test}`"> {{ test }} </a>
+          <a :id="test" :href="$router.resolve(`/problem/${test}`).href">
+            {{ test }}
+          </a>
         </h2>
         <div v-for="input in getInputs(test)" :key="input" class="mt-5">
           <h3 class="text-base font-bold text-red-800">Input: {{ input }}</h3>
@@ -171,13 +173,15 @@
                   v-show="other || problem"
                   :class="['text-left', 'pl-4', mdHide]"
                 >
-                  <a :href="`/${i.lang}`" class="underline text-blue-500">{{
-                    i.lang
-                  }}</a>
+                  <a
+                    :href="$router.resolve(`/${i.lang}`).href"
+                    class="underline text-blue-500"
+                    >{{ i.lang }}</a
+                  >
                 </td>
                 <td class="text-right">
                   <a
-                    :href="`https://github.com/hanabi1224/Programming-Language-Benchmarks/blob/main/bench/algorithm/${test}/${i.code}`"
+                    :href="getSourceUrl(i)"
                     target="_blank"
                     class="underline text-blue-500"
                     >{{ getNormalizedCode(i) }}</a
@@ -219,7 +223,7 @@
           >
             <a
               v-if="i != problem"
-              :href="`/problem/${i}`"
+              :href="$router.resolve(`/problem/${i}`).href"
               :class="getLinkClass(i, i)"
             >
               {{ i }}</a
@@ -238,7 +242,7 @@
           >
             <a
               v-if="!isLinkActive(lang.lang, i.lang)"
-              :href="`/${lang.lang}-vs-${i.lang}`"
+              :href="$router.resolve(`/${lang.lang}-vs-${i.lang}`).href"
               :class="getLinkClass(lang.lang, i.lang)"
             >
               {{ lang.langDisplay }} VS {{ i.langDisplay }}</a
@@ -259,7 +263,12 @@ import { Component, Watch, Vue } from 'nuxt-property-decorator'
 import _ from 'lodash'
 import { MetaInfo } from 'vue-meta'
 import MenuButton from './MenuButton.vue'
-import { getFullCompilerVersion, mergeLangBenchResults } from '~/contentUtils'
+import {
+  getBuildLogUrl,
+  getSourceUrl,
+  getFullCompilerVersion,
+  mergeLangBenchResults,
+} from '~/contentUtils'
 import { importGoogleTagIfNeeded } from '~/gtmUtils'
 
 function requireAll(requireContext: any) {
@@ -343,15 +352,16 @@ export default class LangMetaPage extends Vue {
   }
 
   get buildLogUrl() {
-    // const buildId = this.activeBenchmarks[0].appveyorBuildId
-    // return `https://ci.appveyor.com/project/hanabi1224/another-benchmarks-game/builds/${buildId}`
-    const runId = this.activeBenchmarks[0].githubRunId
-    return `https://github.com/hanabi1224/Programming-Language-Benchmarks/actions/runs/${runId}`
+    return getBuildLogUrl(this.activeBenchmarks[0])
   }
 
   get benchmarkDate() {
     const ts = this.activeBenchmarks[0].testLog.finished as string
     return new Date(ts).toDateString()
+  }
+
+  getSourceUrl(i: BenchResult) {
+    return getSourceUrl(i)
   }
 
   getFullCompilerVersion(i: BenchResult) {
@@ -489,7 +499,19 @@ export default class LangMetaPage extends Vue {
       langsStrs.push(`${this.lang!.langDisplay} lang`)
     }
 
+    const isAMP = /^\/amp(?:\/|$)/.test(this.$route.path)
+    const alternatePath = isAMP
+      ? this.$route.path.replace(/^\/amp/, '') || '/'
+      : `/amp${this.$route.path}`
+    const alternateRel = isAMP ? 'canonical' : 'amphtml'
     const metaInfo: MetaInfo = {
+      link: [
+        {
+          hid: alternateRel,
+          rel: alternateRel,
+          href: this.$router.resolve(alternatePath).href,
+        },
+      ],
       title,
       meta: [
         {

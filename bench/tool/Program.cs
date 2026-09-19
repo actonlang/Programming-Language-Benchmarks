@@ -50,6 +50,7 @@ namespace BenchTool
         /// <param name="noDocker">A Flag that forces disabling docker</param>
         /// <param name="ignoreMissing">A Flag that indicates whether to ignore test/bench failure when build artifacts is missing</param>
         /// <param name="langs">Languages to incldue, e.g. --langs go csharp</param>
+        /// <param name="compilers">Compilers or runtimes to include, optionally with a version, e.g. --compilers clang rustc:stable cpython</param>
         /// <param name="problems">Problems to incldue, e.g. --problems binarytrees nbody</param>
         /// <param name="environments">OS environments to incldue, e.g. --environments linux windows</param>
         public static async Task Main(
@@ -66,6 +67,7 @@ namespace BenchTool
             bool noDocker = false,
             bool ignoreMissing = false,
             string[] langs = null,
+            string[] compilers = null,
             string[] problems = null,
             string[] environments = null)
         {
@@ -105,6 +107,7 @@ namespace BenchTool
 
             List<YamlLangConfig> langConfigs = benchConfig.Langs;
             HashSet<string> includedLanguages = new HashSet<string>(langs ?? new string[] { }, StringComparer.OrdinalIgnoreCase);
+            HashSet<string> includedCompilers = new HashSet<string>(compilers ?? new string[] { }, StringComparer.OrdinalIgnoreCase);
             HashSet<string> includedOsEnvironments = new HashSet<string>(environments ?? new string[] { }, StringComparer.OrdinalIgnoreCase);
             HashSet<string> includedProblems = new HashSet<string>(problems ?? new string[] { }, StringComparer.OrdinalIgnoreCase);
 
@@ -165,6 +168,12 @@ namespace BenchTool
                 foreach (YamlLangEnvironmentConfig env in c.Environments ?? Enumerable.Empty<YamlLangEnvironmentConfig>())
                 {
                     if (!env.Enabled)
+                    {
+                        continue;
+                    }
+                    if (includedCompilers.Count > 0
+                        && !includedCompilers.Contains(env.Compiler)
+                        && !includedCompilers.Contains($"{env.Compiler}:{env.Version}"))
                     {
                         continue;
                     }
@@ -751,6 +760,11 @@ namespace BenchTool
                         cpuTimeUserMS = statsMeasurement.CpuTimeUser.TotalMilliseconds,
                         cpuTimeKernelMS = statsMeasurement.CpuTimeKernel.TotalMilliseconds,
                         githubRunId = GithubActionUtils.RunId,
+                        githubRepository = Environment.GetEnvironmentVariable("GITHUB_REPOSITORY"),
+                        githubSha = Environment.GetEnvironmentVariable("GITHUB_SHA"),
+                        githubRunAttempt = Environment.GetEnvironmentVariable("GITHUB_RUN_ATTEMPT"),
+                        runnerName = Environment.GetEnvironmentVariable("RUNNER_NAME"),
+                        compilerOptions = langEnvConfig.CompilerOptionsText,
                         buildLog = BuildOutputJson.LoadFrom(buildOutput),
                         testLog = TestOutputJson.LoadFrom(buildOutput),
                     }, Formatting.Indented)).ConfigureAwait(false);
