@@ -21,10 +21,11 @@ problems:
 source_rename_to: app.act
 environments:
   - os: linux
-    compiler: actonc
-    compiler_version_command: actonc --version
+    compiler: acton
+    compiler_version_command: acton version
     version: latest
-    build: actonc app.act
+    compiler_options_text: ReleaseFast
+    build: acton --release app.act
     after_build:
       - mv app out
     out_dir: out
