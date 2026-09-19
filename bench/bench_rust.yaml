@@ -103,7 +103,7 @@ environments:
     #   - /tmp/rs/target:/tmp/rs/target
     #   - /tmp/.cargo/registry:/usr/local/cargo/registry
     env:
-      RUSTFLAGS: -Ctarget-cpu=broadwell
+      RUSTFLAGS: -Ctarget-cpu=native
       CC: clang
       CXX: clang++
     include: rust
