@@ -75,3 +75,16 @@ export function useParallelization(i: BenchResult): boolean {
   }
   return i.timeMS > 0 && i.timeMS * 1.5 <= i.cpuTimeMS
 }
+
+export function getBuildLogUrl(i: BenchResult): string {
+  const repository =
+    i.githubRepository || 'hanabi1224/Programming-Language-Benchmarks'
+  return `https://github.com/${repository}/actions/runs/${i.githubRunId}`
+}
+
+export function getSourceUrl(i: BenchResult): string {
+  const repository =
+    i.githubRepository || 'hanabi1224/Programming-Language-Benchmarks'
+  const revision = i.githubSha || 'main'
+  return `https://github.com/${repository}/blob/${revision}/bench/algorithm/${i.test}/${i.code}`
+}

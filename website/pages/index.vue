@@ -11,9 +11,11 @@
           :key="idx"
           class="text-light-onSurfacePrimary"
         >
-          <a :href="`/${i.lang}`" :class="getLinkClass()">{{
-            i.langDisplay
-          }}</a>
+          <a
+            :href="$router.resolve(`/${i.lang}`).href"
+            :class="getLinkClass()"
+            >{{ i.langDisplay }}</a
+          >
         </li>
       </ul>
     </aside>
@@ -25,13 +27,13 @@
             languages and their different compilers or runtime
           </p>
           <p class="pt-5">
-            It currently uses CI to generate benchmark results to guarantee all
-            the numbers are generated from the same environment at nearly the
-            same time. All benchmark tests are executed in a single CI job
+            All benchmark programs are measured sequentially in one CI job. Each
+            run records its machine and compiler versions. Compare numbers
+            within the same run, since GitHub-hosted hardware can change.
           </p>
           <p class="pt-5">
-            Once a change is merged into main branch, the CI job will
-            re-generate and publish the static website
+            Successful benchmark runs publish this website on GitHub Pages. Runs
+            happen on changes to main and weekly.
           </p>
           <p class="pt-5 font-bold">Main goals:</p>
           <ul class="list-disc list-outside italic text-base">
@@ -57,7 +59,7 @@
               A reference for CI setup / Dev environment setup / package
               management setup for different languages. Refer to
               <a
-                href="https://github.com/hanabi1224/Programming-Language-Benchmarks/blob/main/.github/workflows/bench.yml"
+                href="https://github.com/actonlang/Programming-Language-Benchmarks/blob/main/.github/workflows/bench.yml"
                 class="underline text-blue-500"
                 target="_blank"
                 >Github action</a
@@ -89,7 +91,12 @@
             >
           </p>
           <p class="pt-5">
-            It's inspired by
+            This fork is maintained by Acton and based on
+            <a
+              class="underline text-blue-500"
+              href="https://github.com/hanabi1224/Programming-Language-Benchmarks"
+              >hanabi1224/Programming-Language-Benchmarks</a
+            >. It is inspired by
             <a
               class="underline text-blue-500"
               href="https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html"
@@ -101,7 +108,7 @@
           <p class="pt-5">
             <a
               class="underline bold text-blue-500"
-              href="https://github.com/hanabi1224/Programming-Language-Benchmarks"
+              href="https://github.com/actonlang/Programming-Language-Benchmarks"
               target="_blank"
               >CONTRIBUTIONS</a
             >
@@ -120,7 +127,7 @@
             class="text-light-onSurfacePrimary"
           >
             <a
-              :href="`/problem/${i}`"
+              :href="$router.resolve(`/problem/${i}`).href"
               class="p-1 pl-3 flex rounded transition-colors duration-300 ease-linear justify-between underline text-blue-500 hover:text-green-400"
             >
               {{ i }}</a
@@ -137,7 +144,7 @@ import { Component, Vue } from 'nuxt-property-decorator'
 import _ from 'lodash'
 import { MetaInfo } from 'vue-meta'
 import MenuButton from './../components/MenuButton.vue'
-import { mergeLangBenchResults } from '~/contentUtils'
+import { getBuildLogUrl, mergeLangBenchResults } from '~/contentUtils'
 import { importGoogleTagIfNeeded } from '~/gtmUtils'
 
 function requireAll(requireContext: any) {
@@ -188,7 +195,19 @@ export default class IndexPage extends Vue {
       .uniq()
       .value()
 
+    const isAMP = /^\/amp(?:\/|$)/.test(this.$route.path)
+    const alternatePath = isAMP
+      ? this.$route.path.replace(/^\/amp/, '') || '/'
+      : `/amp${this.$route.path}`
+    const alternateRel = isAMP ? 'canonical' : 'amphtml'
     const metaInfo: MetaInfo = {
+      link: [
+        {
+          hid: alternateRel,
+          rel: alternateRel,
+          href: this.$router.resolve(alternatePath).href,
+        },
+      ],
       title:
         'Benchmarks for programming languages and compilers, Which programming language or compiler is faster',
       meta: [
@@ -214,10 +233,7 @@ export default class IndexPage extends Vue {
   }
 
   get buildLogUrl() {
-    // const buildId = this.activeBenchmarks[0].appveyorBuildId
-    // return `https://ci.appveyor.com/project/hanabi1224/another-benchmarks-game/builds/${buildId}`
-    const runId = this.langs[0].benchmarks[0].githubRunId
-    return `https://github.com/hanabi1224/Programming-Language-Benchmarks/actions/runs/${runId}`
+    return getBuildLogUrl(this.langs[0].benchmarks[0])
   }
 
   get benchmarkDate() {

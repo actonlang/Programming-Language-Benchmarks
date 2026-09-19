@@ -1,363 +1,85 @@
 name: bench
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-  merge_group:
   schedule:
-    - cron: "0 0 1 * *"
-env:
-  PROFILE: /tmp/.tmpprofile
-  # https://doc.rust-lang.org/cargo/reference/profiles.html#incremental
-  CARGO_INCREMENTAL: 1
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      # fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-        lang: [
-            acton,
-            c,
-            chapel,
-            codon,
-            cpp,
-            csharp,
-            crystal,
-            d,
-            dart,
-            # elixir,
-            # fortran,
-            go,
-            # hacklang,
-            # haskell,
-            haxe,
-            java,
-            javascript,
-            # julia,
-            kotlin,
-            # lisp,
-            lua,
-            # nelua,
-            nim,
-            ocaml,
-            odin,
-            perl,
-            php,
-            # pony,
-            python,
-            # racket,
-            ruby,
-            rust,
-            swift,
-            typescript,
-            v,
-            wasm,
-            # wren,
-            zig,
-          ]
-    steps:
-      - run: lscpu
-      - run: dotnet --info
-      - uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: "9.x"
-      - name: Install
-        run: |
-          echo '# placeholder' > $PROFILE
-          dotnet --info
-          sudo apt-get update -y
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Install acton
-        if: matrix.lang == 'acton'
-        run: ./.github/acton.sh
-      - name: Install codon
-        if: matrix.lang == 'codon'
-        run: ./.github/codon.sh
-      - name: Install rust stable
-        uses: actions-rs/toolchain@v1
-        if: matrix.lang == 'rust' || matrix.lang == 'wasm'
-        with:
-          toolchain: stable
-          override: true
-      - name: Install rust nightly
-        if: matrix.lang == 'rust'
-        run: |
-          # https://github.com/rust-lang/portable-simd/issues/156
-          # rustup update nightly-2021-08-28
-          # sudo ln -sf $HOME/.rustup/toolchains/nightly-2021-08-28-x86_64-unknown-linux-gnu $HOME/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu
-          rustup update nightly
-          cargo +nightly --version
-      # - name: Install graal
-      #   if: matrix.lang == 'java' || matrix.lang == 'javascript' || matrix.lang == 'python' || matrix.lang == 'ruby' || matrix.lang == 'wasm'
-      #   run: ./.github/graalvm.sh
-      - name: Install clang deps
-        if: matrix.lang == 'c' || matrix.lang == 'cpp'
-        run: ./.github/clang.sh
-      # - name: Install c deps
-      #   if: matrix.lang == 'c'
-      #   run: ./.github/c.sh
-      # - name: Install cpp deps
-      #   if: matrix.lang == 'cpp'
-      #   run: ./.github/cpp.sh
-      - name: Install lisp
-        if: matrix.lang == 'lisp'
-        env:
-          LISP: sbcl-bin
-        run: ./.github/lisp.sh
-      - name: Install racket
-        if: matrix.lang == 'racket'
-        run: ./.github/racket.sh
-      - name: Install fortran
-        if: matrix.lang == 'fortran'
-        run: ./.github/fortran.sh
-      - name: Install lua
-        if: matrix.lang == 'lua'
-        run: ./.github/lua.sh
-      - name: Install dotnet
-        if: matrix.lang == 'csharp'
-        run: ./.github/dotnet.sh
-      # - name: Install graalvm native-image
-      #   if: matrix.lang == 'java'
-      #   run: ./.github/graalvm-native-image.sh
-      # - name: Install graalnode
-      #   if: matrix.lang == 'javascript'
-      #   run: ./.github/graalvm-node.sh
-      - name: Install bun
-        if: matrix.lang == 'javascript'
-        run: ./.github/bun.sh
-      - uses: julia-actions/setup-julia@v1
-        if: matrix.lang == 'julia'
-      - name: Install haxe
-        if: matrix.lang == 'haxe'
-        run: |
-          ./.github/haxe.sh
-          ./.github/hashlink.sh
-      - name: Install zig
-        if: matrix.lang == 'zig' || matrix.lang == 'c' || matrix.lang == 'cpp' || matrix.lang == 'v'
-        run: ./.github/zig.sh
-      - name: Install crystal
-        if: matrix.lang == 'crystal'
-        run: ./.github/crystal.sh
-      - name: Install hhvm
-        if: matrix.lang == 'hacklang'
-        run: ./.github/hhvm.sh
-      - name: Install nelua
-        if: matrix.lang == 'nelua'
-        run: ./.github/nelua.sh
-      - name: Install odin
-        if: matrix.lang == 'odin'
-        run: ./.github/odin.sh
-      - uses: dlang-community/setup-dlang@v1
-        if: matrix.lang == 'd'
-        with:
-          compiler: dmd-latest
-      - uses: dlang-community/setup-dlang@v1
-        if: matrix.lang == 'd'
-        with:
-          compiler: ldc-latest
-      - name: Install nim
-        if: matrix.lang == 'nim'
-        run: ./.github/nim.sh
-      - uses: shogo82148/actions-setup-perl@v1
-        if: matrix.lang == 'perl'
-        with:
-          perl-version: "5"
-          multi-thread: true
-      # - uses: ocaml/setup-ocaml@v2
-      #   if: matrix.lang == 'ocaml'
-      #   with:
-      #     ocaml-compiler: 4.x
-      #     dune-cache: true
-      #     # opam-disable-sandboxing: true
-      - name: Install PHP
-        if: matrix.lang == 'php'
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-          coverage: none
-      - name: Install python
-        if: matrix.lang == 'python'
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-          check-latest: true
-      - name: Install python ext
-        if: matrix.lang == 'python'
-        run: ./.github/python.sh
-      - name: Install ruby
-        if: matrix.lang == 'ruby'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3 # Not needed with a .ruby-version file
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      # - name: Install truffleruby
-      #   if: matrix.lang == 'ruby'
-      #   run: ./.github/truffleruby.sh
-      - name: Install dart
-        if: matrix.lang == 'dart'
-        run: ./.github/dart.sh
-      - name: Install v
-        if: matrix.lang == 'v'
-        run: ./.github/v.sh
-      - name: Install deno
-        if: matrix.lang == 'typescript' || matrix.lang == 'wasm'
-        run: ./.github/deno.sh
-      - name: Install wasm
-        if: matrix.lang == 'wasm'
-        run: ./.github/wasm.sh
-      - run: dotnet --info
-      - name: Build
-        run: |
-          source $PROFILE
-          pushd bench
-          dotnet run -c Release --project tool -- --task build --langs ${{ matrix.lang }} 
-          popd
-      - name: Test
-        run: |
-          source $PROFILE
-          pushd bench
-          dotnet run -c Release --project tool -- --task test --langs ${{ matrix.lang }} 
-          popd
-      - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/main'
-        with:
-          name: build-${{ matrix.lang }}
-          path: bench/build/**/*
-          if-no-files-found: error
-  gate:
-    needs: [build]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-22.04]
-    steps:
-      - run: echo 'dummy step as PR gate'
   bench:
-    if: github.ref == 'refs/heads/main'
-    needs: [build]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-22.04]
+    # Only main may use the dedicated runner; PRs use hosted runners.
+    runs-on: ${{ fromJSON(github.ref == 'refs/heads/main' && vars.BENCHMARK_RUNNER || '["ubuntu-24.04"]') }}
+    timeout-minutes: 90
+    env:
+      PYTHONINTMAXSTRDIGITS: "0"
     steps:
-      - run: lscpu
-      - uses: actions/setup-dotnet@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
-          dotnet-version: "9.x"
-      - name: Install
+          dotnet-version: "9.0.x"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+          cache: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install native dependencies
         run: |
-          dotnet --info
-          echo '# placeholder' > $PROFILE
-          sudo apt-get update -y
-      - uses: actions/checkout@v3
-      # - name: Check CPU Model
-      #   run: |
-      #     source $PROFILE
-      #     pushd bench
-      #     dotnet run -c Release --project tool -- --task checkcpu
-      #     popd
-      - run: ./.github/acton.sh
-      - run: ./.github/codon.sh
-      - run: ./.github/clang.sh
-      - run: ./.github/crystal.sh
-      - run: ./.github/dotnet.sh
-      # - run: ./.github/graalvm.sh
-      # - run: ./.github/graalvm-node.sh
-      - run: ./.github/bun.sh
-      # - run: ./.github/truffleruby.sh
-      - run: ./.github/wasm.sh
-      # - run: ./.github/fortran.sh
-      - uses: julia-actions/setup-julia@v1
-      - run: ./.github/lua.sh
-      # - run: ./.github/racket.sh
-      - run: ./.github/hashlink.sh
-      # - run: ./.github/hhvm.sh
-      # - run: ./.github/dart.sh
-      - uses: shogo82148/actions-setup-perl@v1
-        with:
-          perl-version: "5"
-          multi-thread: true
-      - name: Install PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-          coverage: none
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-          check-latest: true
-      - run: ./.github/python.sh
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3 # Not needed with a .ruby-version file
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: build-*
-          merge-multiple: true
-          path: bench/build/
-      - name: Bench
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libomp-dev libgmp-dev pkg-config python3-pip
+      - name: Install Acton
+        run: bash .github/acton.sh
+      - name: Record machine and compiler versions
         run: |
-          source $PROFILE
-          pushd bench
-          dotnet run -c Release --project tool -- --task test --ignore-missing
-          dotnet run -c Release --project tool -- --task bench --ignore-missing
-          popd
-      - uses: actions/upload-artifact@v4
+          mkdir -p bench/build
+          {
+            date --utc --iso-8601=seconds
+            uname -a
+            lscpu
+            acton version
+            clang --version
+            rustc --version
+            cargo --version
+            go version
+            python3 --version
+            dotnet --info
+          } > bench/build/environment.txt
+      - name: Build and check benchmark programs
+        if: github.event_name == 'pull_request'
+        run: bash .github/bench.sh
+      - name: Build, check, and measure benchmark programs
+        if: github.event_name != 'pull_request'
+        run: bash .github/bench.sh measure
+      - name: Preserve results
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
-          name: log
-          path: bench/build/_results/**/*
+          name: benchmark-results
+          path: |
+            bench/build/_results/
+            bench/build/environment.txt
           if-no-files-found: error
+          retention-days: 90
+
   publish:
-    if: github.ref == 'refs/heads/main'
-    needs: [bench]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 9
-      - uses: actions/download-artifact@v4
-        with:
-          # Artifact name
-          name: log
-          # Destination path
-          path: bench/build/_results/
-      - name: Install
-        run: |
-          ls -al bench/build/_results/
-      - name: Site Update Content
-        run: |
-          pushd website
-          pnpm i
-          pnpm content
-          pnpm build
-          pnpm archive-dist
-        env:
-          GOOGLE_TAG_ID: ${{ secrets.GOOGLE_TAG_ID }}
-      - name: Site Publish
-        if: github.ref == 'refs/heads/main'
-        env:
-          VERCEL_PUBLISH_TOKEN: ${{ secrets.VERCEL_PUBLISH_TOKEN }}
-        run: |
-          npm i -g vercel
-          vercel --version
-          vercel website --prod --yes -t $VERCEL_PUBLISH_TOKEN || echo 'ignore errors'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: bench
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/site.yml
+    with:
+      publish: true

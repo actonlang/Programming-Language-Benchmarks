@@ -1,167 +1,88 @@
-# [Programming Language Benchmarks](https://programming-language-benchmarks.vercel.app/)
+# Programming Language Benchmarks
 
-[![bench](https://github.com/hanabi1224/Programming-Language-Benchmarks/actions/workflows/bench.yml/badge.svg)](https://github.com/hanabi1224/Programming-Language-Benchmarks/actions/workflows/bench.yml)
-[![MIT License](https://img.shields.io/github/license/hanabi1224/Programming-Language-Benchmarks.svg)](https://github.com/hanabi1224/Programming-Language-Benchmarks/blob/master/LICENSE)
+Acton-maintained fork of [hanabi1224/Programming-Language-Benchmarks](https://github.com/hanabi1224/Programming-Language-Benchmarks).
 
-<!-- [![Build status](https://img.shields.io/appveyor/ci/hanabi1224/Programming-Language-Benchmarks/main.svg)](https://ci.appveyor.com/project/hanabi1224/Programming-Language-Benchmarks) -->
+[Published results](https://actonlang.github.io/Programming-Language-Benchmarks/)
+compare Acton with C (Clang), Rust, Go, and CPython. The initial suite covers
+hello world, binary trees, Merkle trees, the prime sieve, and the digits of e
+and pi. A language appears only where it has an implementation of that problem.
+The other upstream implementations remain available for local runs.
 
-# Why Build This
+## Measurements
 
-The idea is to build an automated process for benchmark generation and publishing.
+The benchmark workflow builds and checks every selected program before measuring
+it. All timings in a published run come from one machine and are collected
+sequentially. Each result includes its compiler version, source revision,
+CPU information, and Actions run. The downloadable `benchmark-results` artifact
+also contains the machine and toolchain inventory and is retained for 90 days.
 
-### Comparable numbers
+This fork uses the shared `actest1` performance machine through the
+`BENCHMARK_RUNNER` repository variable, set to
+`["self-hosted", "Linux", "X64", "perf"]`. Only the main branch uses that selection.
+Pull requests build and check programs on GitHub-hosted runners and do not
+publish measurements. Without the variable, measurements also use hosted runners,
+whose hardware can change between runs. Compare languages within the same run.
 
-_It currently use CI to generate benchmark results to guarantee all the numbers are generated from the same environment at nearly the same time. All benchmark tests are executed in a single CI job_
+Use one runner service for repositories sharing the performance machine. The
+benchmark script additionally holds `~/.local/state/acton-perf.lock` while
+building, checking, and measuring. Other measurements on that host must use the
+same lock. New commits cancel superseded runs of this workflow.
 
-### Automatic publishing
+The initial suite selection is in `.github/bench.sh`. Rust uses the stable
+configuration; `--compilers rustc:stable` excludes the separate nightly entry.
+Acton uses release optimization and the current `tip` compiler, installed in the
+job's temporary directory. The runner's system Acton installation is left intact.
+Exact compiler versions are recorded with the results.
 
-_Once a change is merged into main branch, the CI job will re-generate and publish the static website_
+## Running locally
 
-## Main Goals
+Install .NET 9 and the compilers or runtimes you want to compare. Run commands
+from `bench/`, for example:
 
-- Compare performance differences between different languages. Note that implementations might be using different optimizations, e.g. with or w/o multithreading, please do read the source code to check if it's a fair comparison or not.
-- Compare performance differences between different compilers or runtimes of the same language with the same source code.
-- Facilitate benchmarking on real server environments as nowadays more and more applications are deployed with docker/k8s. It's likely to get a very different result from what you get on your dev machine.
-- A reference for CI setup / Dev environment setup / package management setup for different languages. Refer to [Github action](https://github.com/hanabi1224/Programming-Language-Benchmarks/blob/main/.github/workflows/bench.yml)
-- It focuses more on new programming languages, classic
-  programming languages that are covered by [CLBG](https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html) receive limited or no maintenance, based on their popularity.
+```sh
+# Build and check the Acton implementations.
+dotnet run --no-launch-profile -c Release --project tool -- --task build --langs acton
+dotnet run --no-launch-profile -c Release --project tool -- --task test --langs acton
 
-# [Website](https://programming-language-benchmarks.vercel.app/)
+# Measure them after their output checks pass.
+dotnet run --no-launch-profile -c Release --project tool -- --task bench --langs acton
 
-### Build
-
-To achieve better SEO, the published site is static and prerendered, powered by [nuxt.js](https://nuxtjs.org/).
-
-### Host
-
-The website is hosted on [Vercel](https://vercel.com/)
-
-### Development
-
+# Select a particular runtime and problem.
+dotnet run --no-launch-profile -c Release --project tool -- --task build --langs python --compilers cpython --problems binarytrees --no-docker
 ```
-git clone https://github.com/hanabi1224/Programming-Language-Benchmarks.git
 
+`bench/bench.yaml` defines the inputs and expected outputs. Language configurations
+are in `bench/bench_*.yaml`. `--no-docker` uses locally installed compilers instead
+of the container images in those configurations. On Linux, `.github/bench.sh`
+builds and checks the initial suite; `.github/bench.sh measure` also measures it.
+
+## Website
+
+The website is a statically generated Nuxt 2 site. Use Node 22 and pnpm 9.13.2:
+
+```sh
 cd website
-pnpm i
-pnpm build
-pnpm dev
-```
-
-# Benchmarks
-
-_All benchmarks are defined in [bench.yaml](https://github.com/hanabi1224/Programming-Language-Benchmarks/blob/main/bench/bench.yaml)_
-
-_Current benchmarks problems and their implementations are from [The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) ([ Repo](https://salsa.debian.org/benchmarksgame-team/benchmarksgame/))_
-
-# Local development
-
-## Prerequisites
-
-[net9](https://dotnet.microsoft.com/)
-
-[nodejs 14](https://nodejs.org/)
-
-[pnpm](https://pnpm.io/installation)
-
-[podman](https://podman.io/getting-started/installation) (or [docker](https://www.docker.com/) by changing `docker_cmd: podman` to `docker_cmd: docker` in `bench/bench.yaml`)
-
-## Build
-
-_The 1st step is to build source code from various of languages_
-
-```bash
-cd bench
-# To build a subset
-dotnet run --project tool -- --task build --langs lisp go --problems nbody helloworld --force-rebuild
-# To build all
-dotnet run --project tool -- --task build
-```
-
-## Test
-
-_The 2nd step is to test built binaries to ensure the correctness of their implementation_
-
-```bash
-cd bench
-# To test a subset
-dotnet run --project tool -- --task test --langs lisp go --problems nbody helloworld
-# To test all
-dotnet run --project tool -- --task test
-```
-
-## Bench
-
-_The 3rd step is to generate benchmarks_
-
-```bash
-cd bench
-# To bench a subset
-dotnet run --project tool -- --task bench --langs lisp go --problems nbody helloworld
-# To bench all
-dotnet run --project tool -- --task bench
-```
-
-_For usage_
-
-```bash
-cd bench
-dotnet run --project tool -- -h
-
-BenchTool
-  Main function
-
-Usage:
-  BenchTool [options]
-
-Options:
-  --config <config>              Path to benchmark config file [default: bench.yaml]
-  --algorithm <algorithm>        Root path that contains all algorithm code [default: algorithm]
-  --include <include>            Root path that contains all include project templates [default: include]
-  --build-output <build-output>  Output folder of build step [default: build]
-  --task <task>                  Benchmark task to run, valid values: build, test, bench [default: build]
-  --force-pull-docker            A flag that indicates whether to force pull docker image even when it exists [default: False]
-  --force-rebuild                A flag that indicates whether to force rebuild [default: False]
-  --fail-fast                    A Flag that indicates whether to fail fast when error occurs [default: False]
-  --build-pool                   A flag that indicates whether builds that can run in parallel [default: False]
-  --verbose                      A Flag that indicates whether to print verbose information [default: False]
-  --no-docker                    A Flag that forces disabling docker [default: False]
-  --langs <langs>                Languages to include, e.g. --langs go csharp [default: ]
-  --problems <problems>          Problems to include, e.g. --problems binarytrees nbody [default: ]
-  --environments <environments>  OS environments to include, e.g. --environments linux windows [default: ]
-  --version                      Show version information
-  -?, -h, --help                 Show help and usage information
-```
-
-## Refresh website
-
-_Lastly you can re-generate website with latest benchmark numbers_
-
-```
-cd website
-pnpm i
+pnpm install --frozen-lockfile
+# Replace the checked-in upstream sample data with local measurements.
 pnpm content
-pnpm build
-serve dist
+NODE_OPTIONS=--openssl-legacy-provider SITE_BASE_PATH=/Programming-Language-Benchmarks/ pnpm build
 ```
 
-# TODOs
+The generated site is in `website/dist`. `SITE_BASE_PATH` defaults to `/` for
+local development. All internal links and assets respect the configured prefix.
+The checked-in upstream data is only for website development and PR build checks;
+publishing replaces it completely with results from the successful benchmark run.
 
-Integrate test environment info into website
+The `bench` workflow runs on main changes, weekly, and on manual dispatch. Its
+`publish` job calls `site.yml`, which downloads that run's results, builds the
+website on a GitHub-hosted runner, and deploys it to GitHub Pages. Configure the
+repository's Pages publishing source as GitHub Actions. A failed build or
+measurement job leaves the previous published site in place.
 
-Integrate build / test / benchmark information into website
+## Attribution
 
-...
-
-# How to contribute
-
-TODO
-
-# Thanks
-
-_This is inspired by [The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/), thanks to the curator._
-
-# LICENSES
-
-Code of problem implementation from [The Computer Language Benchmarks Game](https://salsa.debian.org/benchmarksgame-team/benchmarksgame/) is under their [Revised BSD](https://benchmarksgame-team.pages.debian.net/benchmarksgame/license.html)
-
-Other code in this repo is under MIT.
+Benchmark problems and many implementations originate from
+[The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html)
+and the upstream project. Preserve source-file attribution when adding or
+adapting implementations. The repository is distributed under its existing
+[MIT license](LICENSE).

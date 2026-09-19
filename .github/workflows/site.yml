@@ -1,33 +1,64 @@
 name: site
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+
 on:
-  # push:
-  #   branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
-  merge_group:
+    paths: ["website/**", ".github/workflows/site.yml"]
+  workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+    runs-on: ubuntu-24.04
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
+      SITE_BASE_PATH: /Programming-Language-Benchmarks/
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: 18.x
-      - uses: pnpm/action-setup@v2
+          version: 9.13.2
+      - uses: actions/setup-node@v4
         with:
-          version: 9
-      - run: npm i -g vercel
-      - run: vercel --version
-      - name: Build
-        run: |
-          cd website
-          pnpm i
-          pnpm build
-          pnpm archive-dist
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+      - uses: actions/download-artifact@v4
+        if: inputs.publish
+        with:
+          name: benchmark-results
+          path: bench/build
+      - name: Install website dependencies
+        working-directory: website
+        run: pnpm install --frozen-lockfile
+      - name: Replace sample data with this run's results
+        if: inputs.publish
+        working-directory: website
+        run: pnpm content
+      - name: Build static website
+        working-directory: website
+        run: pnpm build
+      - uses: actions/upload-pages-artifact@v3
+        if: inputs.publish
+        with:
+          path: website/dist
+
+  deploy:
+    if: inputs.publish
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
