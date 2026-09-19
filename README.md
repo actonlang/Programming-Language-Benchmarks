@@ -30,6 +30,7 @@ same lock. New commits cancel superseded runs of this workflow.
 
 The initial suite selection is in `.github/bench.sh`. Rust uses the stable
 configuration; `--compilers rustc:stable` excludes the separate nightly entry.
+Clang and Rust optimize for the CPU on which the benchmarks run.
 Acton uses release optimization and the current `tip` compiler, installed in the
 job's temporary directory. The runner's system Acton installation is left intact.
 Exact compiler versions are recorded with the results.
