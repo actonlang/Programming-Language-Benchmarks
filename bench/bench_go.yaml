@@ -70,8 +70,6 @@ environments:
     compiler: go
     version: latest
     docker: golang
-    env:
-      GOAMD64: v3 # https://github.com/golang/go/wiki/MinimumRequirements#amd64
     include: go
     build: go mod tidy && go build -o out/app
     after_build:
