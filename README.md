@@ -3,9 +3,9 @@
 Acton-maintained fork of [hanabi1224/Programming-Language-Benchmarks](https://github.com/hanabi1224/Programming-Language-Benchmarks).
 
 [Published results](https://actonlang.github.io/Programming-Language-Benchmarks/)
-compare Acton with C (Clang), Rust, Go, and CPython. The initial suite covers
-hello world, binary trees, Merkle trees, the prime sieve, and the digits of e
-and pi. A language appears only where it has an implementation of that problem.
+cover all 18 problems with Acton and Go implementations. Hello world, binary
+trees, Merkle trees, the prime sieve, and the digits of e and pi also include
+the existing C (Clang), Rust, and CPython comparisons where available.
 The other upstream implementations remain available for local runs.
 
 ## Measurements
@@ -42,7 +42,7 @@ To install or update it on `actest1`, copy it to
 `ACTIONS_RUNNER_HOOK_JOB_STARTED` and `ACTIONS_RUNNER_HOOK_JOB_COMPLETED` to that
 absolute path in the runner service environment, then restart the idle service.
 
-The initial suite selection is in `.github/bench.sh`. Rust uses the stable
+The published suite selection is in `.github/bench.sh`. Rust uses the stable
 configuration; `--compilers rustc:stable` excludes the separate nightly entry.
 Clang and Rust optimize for the CPU on which the benchmarks run.
 Acton uses release optimization and the current `tip` compiler, installed in the
@@ -69,7 +69,24 @@ dotnet run --no-launch-profile -c Release --project tool -- --task build --langs
 `bench/bench.yaml` defines the inputs and expected outputs. Language configurations
 are in `bench/bench_*.yaml`. `--no-docker` uses locally installed compilers instead
 of the container images in those configurations. On Linux, `.github/bench.sh`
-builds and checks the initial suite; `.github/bench.sh measure` also measures it.
+builds and checks the published suite; `.github/bench.sh measure` also measures it.
+
+## Acton implementations
+
+Every problem has an Acton implementation in `bench/algorithm/`. The coroutine
+sieve uses a chain of actors with bounded outstanding requests. The HTTP test
+runs a local server and concurrent JSON POST clients with up to 64 persistent
+connections. secp256k1 uses Acton bigints and Jacobian coordinates, without a
+native elliptic-curve library; the Go implementation uses libsecp256k1 through
+CGO and is marked as FFI on the site.
+
+The numeric ports reuse buffers and avoid unnecessary permutation copies.
+FASTA uses a lookup table for its fixed random-number range, k-nucleotide uses
+rolling two-bit keys, and LRU uses a hash table and reusable linked slots.
+Regex-redux uses the standard regex library with overlapping ASCII windows
+to bound repeated UTF-8 scans. Mandelbrot preserves separate rounding steps
+so its bitmap matches the reference on CPUs with fused multiply-add support.
+These are starting implementations for further Acton optimization.
 
 ## Website
 

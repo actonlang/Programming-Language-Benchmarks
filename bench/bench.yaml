@@ -50,7 +50,9 @@ problems:
         output: 10000_out
     tests:
       - input: 500000
+        timeout_seconds: 120
       - input: 5000000
+        timeout_seconds: 120
   - name: spectral-norm
     unittests:
       - input: 100
@@ -59,8 +61,11 @@ problems:
       #   output: 101_out
     tests:
       - input: 2000
+        timeout_seconds: 120
       - input: 4000
+        timeout_seconds: 120
       - input: 8000
+        timeout_seconds: 300
   - name: pidigits
     unittests:
       - input: 27
@@ -93,7 +98,9 @@ problems:
         output: 500_out
     tests:
       - input: 1000
+        timeout_seconds: 120
       - input: 5000
+        timeout_seconds: 120
   - name: fannkuch-redux
     unittests:
       - input: 7
@@ -102,14 +109,18 @@ problems:
         output: 10_out
     tests:
       - input: 10
+        timeout_seconds: 120
       - input: 11
+        timeout_seconds: 300
   - name: fasta
     unittests:
       - input: 1000
         output: 1000_out
     tests:
       - input: 250000
+        timeout_seconds: 120
       - input: 2500000
+        timeout_seconds: 120
   - name: knucleotide
     data:
       - in.zip
@@ -122,7 +133,9 @@ problems:
         output: 250000_out
     tests:
       - input: 250000_in
+        timeout_seconds: 120
       - input: 2500000_in
+        timeout_seconds: 120
   - name: regex-redux
     data:
       - ../knucleotide/in.zip
@@ -135,7 +148,9 @@ problems:
         output: 250000_out
     tests:
       - input: 250000_in
+        timeout_seconds: 120
       - input: 2500000_in
+        timeout_seconds: 120
   - name: json-serde
     data:
       - sample.json
@@ -147,7 +162,9 @@ problems:
         output: canada_3_out
     tests:
       - input: sample 5000
+        timeout_seconds: 120
       - input: canada 15
+        timeout_seconds: 120
   - name: coro-prime-sieve
     unittests:
       - input: 100
@@ -156,7 +173,9 @@ problems:
         output: 200_out
     tests:
       - input: 1000
+        timeout_seconds: 120
       - input: 4000
+        timeout_seconds: 120
   - name: http-server
     unittests:
       - input: 10
@@ -165,7 +184,9 @@ problems:
         output: 50_out
     tests:
       - input: 500
+        timeout_seconds: 120
       - input: 3000
+        timeout_seconds: 120
   - name: lru
     unittests:
       - input: 10 1000
@@ -176,8 +197,11 @@ problems:
         output: 100_10000_out
     tests:
       - input: 100 500000
+        timeout_seconds: 120
       - input: 1000 1000000
+        timeout_seconds: 120
       - input: 1000 3000000
+        timeout_seconds: 120
   - name: secp256k1
     unittests:
       - input: 1
@@ -186,6 +210,8 @@ problems:
         output: 10_out
     tests:
       - input: 500
+        timeout_seconds: 120
       - input: 2000
+        timeout_seconds: 120
 tmp_dir: _bench
 docker_cmd: podman
