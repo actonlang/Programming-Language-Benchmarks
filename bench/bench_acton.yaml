@@ -18,6 +18,42 @@ problems:
   - name: pidigits
     source:
       - 1.act
+  - name: nbody
+    source:
+      - 1.act
+  - name: spectral-norm
+    source:
+      - 1.act
+  - name: mandelbrot
+    source:
+      - 1.act
+  - name: fannkuch-redux
+    source:
+      - 1.act
+  - name: fasta
+    source:
+      - 1.act
+  - name: knucleotide
+    source:
+      - 1.act
+  - name: regex-redux
+    source:
+      - 1.act
+  - name: json-serde
+    source:
+      - 1.act
+  - name: coro-prime-sieve
+    source:
+      - 1.act
+  - name: http-server
+    source:
+      - 1.act
+  - name: lru
+    source:
+      - 1.act
+  - name: secp256k1
+    source:
+      - 1.act
 source_rename_to: app.act
 environments:
   - os: linux
