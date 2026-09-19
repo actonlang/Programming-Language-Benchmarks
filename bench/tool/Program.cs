@@ -715,9 +715,9 @@ namespace BenchTool
                             maxRetries--;
                         }
                     }
-                    if (measurements.Count < 1)
+                    if (measurements.Count != repeat)
                     {
-                        break;
+                        throw new InvalidOperationException($"Incomplete measurements for {buildId} with input {test.Input}: {measurements.Count}/{repeat}");
                     }
 
                     statsMeasurement = measurements.GetAverageStats();

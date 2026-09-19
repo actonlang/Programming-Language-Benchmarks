@@ -41,6 +41,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends clang libomp-dev libgmp-dev pkg-config python3-pip
       - name: Install Acton
         run: bash .github/acton.sh
+      - name: Check measurement failure handling
+        run: python3 bench/tests/test_measurements.py
       - name: Record machine and compiler versions
         run: |
           mkdir -p bench/build
