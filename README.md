@@ -34,6 +34,8 @@ artifact uploads, clears APT downloads, and resets compiler caches when they
 exceed their limits: 8 GiB for Acton, 2 GiB for Zig, and 4 GiB per Rust target
 directory. The next job also clears leftovers from an interrupted run.
 The hook takes the same performance lock and preserves tracked source files.
+Benchmark scratch files use the runner's temporary directory so job cleanup also
+removes interrupted builds.
 
 To install or update it on `actest1`, copy it to
 `/opt/actest1/runner-cleanup.sh` with executable permissions. Set both

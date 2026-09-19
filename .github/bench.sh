@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/../bench"
+export TMPDIR="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 
 # Build, check, and measure exactly the same selection on one machine.
 selection=(
