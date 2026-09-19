@@ -48,6 +48,8 @@ Clang and Rust optimize for the CPU on which the benchmarks run.
 Acton uses release optimization and the current `tip` compiler, installed in the
 job's temporary directory. The runner's system Acton installation is left intact.
 Exact compiler versions are recorded with the results.
+Go uses one installed 1.26 toolchain throughout the job; dependencies cannot
+silently select a different compiler during a build.
 
 ## Running locally
 
