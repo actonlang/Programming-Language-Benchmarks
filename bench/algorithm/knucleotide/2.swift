@@ -85,7 +85,9 @@ func getSequenceHash(_ n: Int, seq: [Int8]) -> [Int:Int] {
 }
 
 func readInputAndRewrite(_ fileName: String) -> [Int8] {
-    let fp = fopen(fileName, "r");
+    guard let fp = fopen(fileName, "r") else {
+        fatalError("Cannot open input: \(fileName)")
+    }
     defer {
         fclose(fp);
     }

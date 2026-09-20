@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plan the suite and reject incomplete benchmark artifacts."""
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -65,6 +66,7 @@ def verify(language, task):
     paths = {p.name: p for p in (BENCH / 'build/_results' / language).glob('*.json')}
     if paths.keys() != expected_records.keys():
         raise ValueError(f'{language}: missing={sorted(expected_records.keys() - paths.keys())}, unexpected={sorted(paths.keys() - expected_records.keys())}')
+    machines = set()
     for name, path in paths.items():
         record = json.loads(path.read_text())
         actual = tuple(str(record[k]) for k in ('test', 'code', 'compiler', 'compilerVersion', 'input'))
@@ -72,15 +74,22 @@ def verify(language, task):
             raise ValueError(f'Wrong program identity: {path}')
         if not record.get('buildLog') or not record.get('testLog'):
             raise ValueError(f'Missing build or correctness evidence: {path}')
+        machine = (record.get('cpuInfo'), record.get('runnerName'))
+        if not all(machine):
+            raise ValueError(f'Missing machine identity: {path}')
+        machines.add(machine)
         if record.get('status') == 'timeout':
             if record.get('timeMS') is not None or record.get('timeoutSeconds', 0) <= 0:
                 raise ValueError(f'Invalid timeout: {path}')
-        elif record.get('timeMS', 0) <= 0:
+        elif record.get('status') not in (None, 'ok') or not isinstance(record.get('timeMS'), (int, float)) or not math.isfinite(record['timeMS']) or record['timeMS'] <= 0:
             raise ValueError(f'Invalid measurement: {path}')
         for key, variable in (('githubSha', 'GITHUB_SHA'), ('githubRunId', 'GITHUB_RUN_ID'), ('githubRepository', 'GITHUB_REPOSITORY')):
             if os.environ.get(variable) and str(record.get(key)) != os.environ[variable]:
                 raise ValueError(f'Wrong {key}: {path}')
+    if len(machines) != 1:
+        raise ValueError(f'{language}: measurements came from different machines')
     print(f'{language}: {len(paths)} benchmark records verified')
+    return machines
 
 
 def plan():
@@ -134,7 +143,10 @@ if __name__ == '__main__':
         for language in LANGUAGES:
             print(f'{language}: {len(programs(language))} programs')
     elif command.startswith('verify-'):
+        machines = set()
         for language in (list(LANGUAGES) if sys.argv[2] == 'all' else [sys.argv[2]]):
-            verify(language, command.removeprefix('verify-'))
+            machines.update(verify(language, command[len('verify-'):]) or set())
+        if len(machines) > 1:
+            raise ValueError('Results from different machines cannot be published together')
     else:
         raise ValueError(f'Unknown command: {command}')

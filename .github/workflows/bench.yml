@@ -45,7 +45,9 @@ jobs:
           REQUESTED_MODE: ${{ inputs.mode }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: /usr/bin/python3 .github/suite.py plan
+        run: |
+          /usr/bin/python3 bench/tests/test_suite.py
+          /usr/bin/python3 .github/suite.py plan
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"

@@ -18,7 +18,10 @@ if ! command -v podman >/dev/null; then
 fi
 storage=/var/lib/acton-bench-containers
 engine=(sudo -n podman --root "$storage" --runroot /run/acton-bench-containers)
-"${engine[@]}" container prune --force
+mapfile -t abandoned < <("${engine[@]}" ps --all --quiet)
+if (( ${#abandoned[@]} )); then
+  "${engine[@]}" rm --force "${abandoned[@]}"
+fi
 if [[ -d "$storage" ]] && (( $(sudo -n du -sk "$storage" | cut -f1) > 31457280 )); then
   "${engine[@]}" system prune --all --force
 fi
@@ -36,7 +39,7 @@ trap 'exit 143' TERM
 echo "::group::Prepare $language toolchain"
 "${engine[@]}" build --layers --pull=always \
   --build-arg "TOOLCHAIN_IMAGE=$toolchain_image" \
-  --build-arg "LANGUAGE=$language" --build-arg "BENCH_UID=$(id -u)" \
+  --build-arg "BENCH_LANGUAGE=$language" --build-arg "BENCH_UID=$(id -u)" \
   --tag "$image" .github/containers
 echo "::endgroup::"
 
