@@ -3,10 +3,8 @@
 Acton-maintained fork of [hanabi1224/Programming-Language-Benchmarks](https://github.com/hanabi1224/Programming-Language-Benchmarks).
 
 [Published results](https://actonlang.github.io/Programming-Language-Benchmarks/)
-cover all 18 problems with Acton and Go implementations. Hello world, binary
-trees, Merkle trees, the prime sieve, and the digits of e and pi also include
-the existing C (Clang), Rust, and CPython comparisons where available.
-The other upstream implementations remain available for local runs.
+compare every upstream language with Acton. Acton implements all 18 problems;
+other languages cover the problems for which upstream supplies implementations.
 
 ## Measurements
 
@@ -16,17 +14,22 @@ sequentially. Each result includes its compiler version, source revision,
 CPU information, and Actions run. The downloadable `benchmark-results` artifact
 also contains the machine and toolchain inventory and is retained for 90 days.
 
-This fork uses the shared `actest1` performance machine through the
-`BENCHMARK_RUNNER` repository variable, set to
-`["self-hosted", "Linux", "X64", "perf"]`. Only the main branch uses that selection.
-Pull requests build and check programs on GitHub-hosted runners and do not
-publish measurements. Without the variable, measurements also use hosted runners,
-whose hardware can change between runs. Compare languages within the same run.
+Full measurements run weekly and on manual dispatch on the dedicated `actest1`
+runner (`self-hosted`, `Linux`, `X64`, `perf`). Each language has a separate job;
+only one measurement job runs at a time. Pull requests and main pushes check
+outputs on hosted runners, selecting affected languages when possible. They do
+not collect or publish timings.
 
-Use one runner service for repositories sharing the performance machine. The
-benchmark script additionally holds `~/.local/state/acton-perf.lock` while
-building, checking, and measuring. Other measurements on that host must use the
-same lock. New commits cancel superseded runs of this workflow.
+Each language uses its own container with the same harness and inputs. The
+container runs on the host CPU without a CPU quota. The wrapper holds
+`~/.local/state/acton-perf.lock` throughout setup, checking, and measurement.
+Other measurements on the host must use that lock. A manual language selection
+supports troubleshooting; only a complete run publishes the website. A new full
+run cancels an older full run, while normal pushes leave it running.
+
+Container storage is isolated in `/var/lib/acton-bench-containers`. Unused
+benchmark containers are removed before each job, dangling images afterwards,
+and the image cache is cleared before a build when it exceeds 30 GiB.
 
 `actest1` runs `.github/runner-cleanup.sh` before and after each job, including
 jobs from the Acton repository. It removes untracked checkout output after
@@ -34,22 +37,23 @@ artifact uploads, clears APT downloads, and resets compiler caches when they
 exceed their limits: 8 GiB for Acton, 2 GiB for Zig, and 4 GiB per Rust target
 directory. The next job also clears leftovers from an interrupted run.
 The hook takes the same performance lock and preserves tracked source files.
-Benchmark scratch files use the runner's temporary directory so job cleanup also
-removes interrupted builds.
+Benchmark scratch files live inside the job container and disappear when it exits.
 
 To install or update it on `actest1`, copy it to
 `/opt/actest1/runner-cleanup.sh` with executable permissions. Set both
 `ACTIONS_RUNNER_HOOK_JOB_STARTED` and `ACTIONS_RUNNER_HOOK_JOB_COMPLETED` to that
 absolute path in the runner service environment, then restart the idle service.
 
-The published suite selection is in `.github/bench.sh`. Rust uses the stable
-configuration; `--compilers rustc:stable` excludes the separate nightly entry.
-Clang and Rust optimize for the CPU on which the benchmarks run.
-Acton uses release optimization and the current `tip` compiler, installed in the
-job's temporary directory. The runner's system Acton installation is left intact.
-Exact compiler versions are recorded with the results.
-Go uses one installed 1.26 toolchain throughout the job; dependencies cannot
-silently select a different compiler during a build.
+`.github/languages.json` selects all 39 upstream language entries and their
+primary toolchains, including WebAssembly. It does not select every historical
+compiler release or experimental backend. `.github/suite.py` requires every
+selected program to build, pass correctness checks, and produce every expected
+result before publication. Toolchain versions, the container image ID, source
+revision, and Actions run are recorded with the results.
+
+Native compiler optimizations target the CPU running the benchmark. Acton uses
+release optimization and the current tip compiler. Go uses one 1.26 toolchain
+throughout the job; dependencies cannot silently select another compiler.
 
 ## Running locally
 
@@ -70,8 +74,9 @@ dotnet run --no-launch-profile -c Release --project tool -- --task build --langs
 
 `bench/bench.yaml` defines the inputs and expected outputs. Language configurations
 are in `bench/bench_*.yaml`. `--no-docker` uses locally installed compilers instead
-of the container images in those configurations. On Linux, `.github/bench.sh`
-builds and checks the published suite; `.github/bench.sh measure` also measures it.
+of the container images in those configurations. On Linux with sudo access, the CI wrapper installs Podman if needed and uses
+an isolated container, for example `bash .github/run-language.sh check rust` or
+`bash .github/run-language.sh measure rust`.
 
 ## Acton implementations
 
@@ -107,7 +112,7 @@ local development. All internal links and assets respect the configured prefix.
 The checked-in upstream data is only for website development and PR build checks;
 publishing replaces it completely with results from the successful benchmark run.
 
-The `bench` workflow runs on main changes, weekly, and on manual dispatch. Its
+The `bench` workflow measures weekly and on manual dispatch. Its
 `publish` job calls `site.yml`, which downloads that run's results, builds the
 website on a GitHub-hosted runner, and deploys it to GitHub Pages. Configure the
 repository's Pages publishing source as GitHub Actions. A failed build or

@@ -1,5 +1,4 @@
 lang: julia
-enabled: false
 problems:
   - name: helloworld
     source:
@@ -50,6 +49,7 @@ environments:
     # needs extra warmup here because precompiled .ji files
     # under ~/.julia/compiled use identical file name for all problems.
     warmup: true
-    run_cmd: julia/bin/julia -t auto -O3 -q --check-bounds=no --startup-file=no --sysimage-native-code=yes run.jl
+    runtime_included: false
+    run_cmd: julia -t auto -O3 -q --check-bounds=no --startup-file=no --sysimage-native-code=yes run.jl
     # TODO: compile app with PackageCompiler.jl
     # it's currently TOOOOOOO SLOW

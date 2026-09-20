@@ -52,6 +52,7 @@ environments:
     include:
     build: cp c.js out
     out_dir: out
+    runtime_included: false
     run_cmd: node --stack-size=10000 c.js
   - os: linux
     compiler: node
@@ -61,4 +62,5 @@ environments:
     include:
     build: cp c.js out
     out_dir: out
+    runtime_included: false
     run_cmd: node --stack-size=10000 c.js

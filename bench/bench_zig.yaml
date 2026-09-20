@@ -65,6 +65,6 @@ environments:
     version: latest
     docker:
     include: zig
-    build: zig build -Dcpu=broadwell # --verbose-llvm-cpu-features
+    build: zig build -Dcpu=native # --verbose-llvm-cpu-features
     out_dir: zig-out/bin
     run_cmd: app
