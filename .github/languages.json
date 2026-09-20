@@ -34,7 +34,7 @@
   "rust": {"compilers": ["rustc:stable"]},
   "swift": {"image": "swift:6.1-noble", "compilers": ["swift"]},
   "typescript": {"compilers": ["deno"]},
-  "v": {"compilers": ["v/clang+gc", "v/clang"]},
+  "v": {"compilers": ["v/clang+gc"]},
   "wasm": {"compilers": ["wasmtime"]},
   "wren": {"compilers": ["wren"]},
   "zig": {"compilers": ["zig"]}

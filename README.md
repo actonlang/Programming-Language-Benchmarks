@@ -4,7 +4,7 @@ Acton-maintained fork of [hanabi1224/Programming-Language-Benchmarks](https://gi
 
 [Published results](https://actonlang.github.io/Programming-Language-Benchmarks/)
 compare every upstream language with Acton. Acton implements all 18 problems;
-other languages cover the problems for which upstream supplies implementations.
+other languages use the implementations enabled in the upstream configurations.
 
 ## Measurements
 
@@ -53,6 +53,9 @@ result before publication. A program that passes correctness checks but exceeds
 a measurement time limit is shown as a timeout, without timing or memory values.
 Crashes and incomplete repetitions fail the job. Toolchain versions, the container image ID, source
 revision, and Actions run are recorded with the results.
+
+V uses its garbage-collected backend; the experimental autofree backend corrupts
+big-integer calculations in the digit benchmarks.
 
 Native compiler optimizations target the CPU running the benchmark. Acton uses
 release optimization and the current tip compiler. Go uses one 1.26 toolchain

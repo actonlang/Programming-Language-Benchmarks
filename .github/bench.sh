@@ -6,7 +6,7 @@ language="${2:?language}"
 [[ "$mode" == check || "$mode" == measure ]]
 [[ ! -f /opt/bench-profile ]] || source /opt/bench-profile
 mapfile -t compilers < <(python3 -c 'import json,sys; print("\n".join(json.load(open("../.github/languages.json"))[sys.argv[1]]["compilers"]))' "$language")
-selection=(--langs "$language" --compilers "${compilers[@]}" --environments linux --no-docker --fail-fast)
+selection=(--langs "$language" --compilers "${compilers[@]}" --environments linux --no-docker)
 
 mkdir -p build
 {
