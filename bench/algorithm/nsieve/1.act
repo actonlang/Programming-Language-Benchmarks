@@ -10,6 +10,7 @@ def nsieve(n: int):
     while i * i < n:
         if flags[i] != 0:
             start = i * i
+            # TODO: Retry a plain loop once bytearray stores avoid boxing.
             flags[start:n:i] = b"\x00" * ((n - 1 - start) // i + 1)
         i += 1
     count = flags.count(bytearray(b"\x01"))

@@ -7,8 +7,9 @@ def multiply(u: list[float], v: list[float], transpose: bool):
     n = len(u)
     for i in range(n):
         total = 0.0
-        # Integer-valued floats stay exact at the benchmark sizes and avoid
-        # converting the denominator for every element.
+        # Integer-valued floats stay exact at the benchmark sizes.
+        # TODO: Return to integer arithmetic once float(int) avoids boxing:
+        # https://github.com/actonlang/acton/issues/3148
         denominator = float(i * (i + 1) // 2 + (1 if transpose else i + 1))
         step = float(i + (2 if transpose else 1))
         for j in range(n):
