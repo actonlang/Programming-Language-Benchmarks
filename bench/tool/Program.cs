@@ -357,7 +357,9 @@ namespace BenchTool
             // Before Build
             await ProcessUtils.RunCommandsAsync(
                 langEnvConfig.BeforeBuild,
-                workingDir: tmpDir.FullPath).ConfigureAwait(false);
+                workingDir: tmpDir.FullPath,
+                ensureZeroExitCode: true,
+                env: langEnvConfig.Env).ConfigureAwait(false);
 
             // Check compiler version and save output
             string compilerVersionCommand = langEnvConfig.CompilerVersionCommand.FallBackTo(langConfig.CompilerVersionCommand);
@@ -435,6 +437,7 @@ namespace BenchTool
                     await ProcessUtils.RunCommandAsync(
                         buildCommand,
                         workingDir: tmpDir.FullPath,
+                        ensureZeroExitCode: true,
                         env: langEnvConfig.Env).ConfigureAwait(false);
                 }
                 else
@@ -442,6 +445,7 @@ namespace BenchTool
                     await ProcessUtils.RunCommandsAsync(
                         buildCommand.Split("&&", StringSplitOptions.RemoveEmptyEntries),
                         workingDir: tmpDir.FullPath,
+                        ensureZeroExitCode: true,
                         env: langEnvConfig.Env).ConfigureAwait(false);
                 }
             }
@@ -449,7 +453,9 @@ namespace BenchTool
             // After Build
             await ProcessUtils.RunCommandsAsync(
                 langEnvConfig.AfterBuild,
-                workingDir: tmpDir.FullPath).ConfigureAwait(false);
+                workingDir: tmpDir.FullPath,
+                ensureZeroExitCode: true,
+                env: langEnvConfig.Env).ConfigureAwait(false);
 
             if (Directory.Exists(buildOutput))
             {
@@ -561,7 +567,7 @@ namespace BenchTool
                 {
                     using var cts = new CancellationTokenSource();
                     cts.CancelAfter(TimeSpan.FromSeconds(60));
-                    ProcessUtils.RunProcess(
+                    int exitCode = ProcessUtils.RunProcess(
                         runPsi,
                         printOnConsole: false,
                         asyncRead: false,
@@ -569,7 +575,7 @@ namespace BenchTool
                         out string stdErr,
                         env: langEnvConfig.RunCmdEnv,
                         token: cts.Token);
-                    if (StringComparer.Ordinal.Equals(expectedOutput.TrimEnd(), stdOut.TrimEnd()))
+                    if (exitCode == 0 && StringComparer.Ordinal.Equals(expectedOutput.TrimEnd(), stdOut.TrimEnd()))
                     {
                         Logger.Info($"Test Passed: {buildId}");
                         error = null;
@@ -578,6 +584,7 @@ namespace BenchTool
                     else
                     {
                         error = new Exception($"Test Failed: {buildId}"
+                            + $"\nExit code: {exitCode}"
                             + $"\nInput: {test.Input}"
                             + $"\nExpected output path: {expectedOutputPath}"
                             + $"\n Std Out:\n{stdOut}"
@@ -588,15 +595,6 @@ namespace BenchTool
 
                 if (error != null)
                 {
-                    await ProcessUtils.RunProcessAsync(
-                        runPsi,
-                        useShellExecute: true,
-                        printOnConsole: false,
-                        asyncRead: false,
-                        stdOutBuilder: null,
-                        stdErrorBuilder: null,
-                        env: null,
-                        default);
                     throw error;
                 }
             }
@@ -689,6 +687,7 @@ namespace BenchTool
                     repeat = 1;
                 }
 
+                bool timedOut = false;
                 ProcessMeasurement statsMeasurement = new ProcessMeasurement();
                 for (int nRetry = 0; nRetry < 5; nRetry++)
                 {
@@ -708,12 +707,22 @@ namespace BenchTool
                             Logger.Debug($"({buildId}){langConfig.Lang}:{problem.Name}:{test.Input} {measurement}");
                             measurements.Add(measurement);
                         }
+                        catch (TimeoutException e)
+                        {
+                            Logger.Warn(e.Message);
+                            timedOut = true;
+                            break;
+                        }
                         catch (Exception e)
                         {
                             Logger.Error(e);
                             i--;
                             maxRetries--;
                         }
+                    }
+                    if (timedOut)
+                    {
+                        break;
                     }
                     if (measurements.Count != repeat)
                     {
@@ -753,12 +762,14 @@ namespace BenchTool
                         test = problem.Name,
                         code = codePath,
                         input = test.Input,
-                        timeMS = statsMeasurement.Elapsed.TotalMilliseconds,
-                        timeStdDevMS = statsMeasurement.ElapsedStdDevMS,
-                        memBytes = statsMeasurement.PeakMemoryBytes,
-                        cpuTimeMS = statsMeasurement.CpuTime.TotalMilliseconds,
-                        cpuTimeUserMS = statsMeasurement.CpuTimeUser.TotalMilliseconds,
-                        cpuTimeKernelMS = statsMeasurement.CpuTimeKernel.TotalMilliseconds,
+                        status = timedOut ? "timeout" : "ok",
+                        timeoutSeconds = test.TimeoutSeconds,
+                        timeMS = timedOut ? (double?)null : statsMeasurement.Elapsed.TotalMilliseconds,
+                        timeStdDevMS = timedOut ? (double?)null : statsMeasurement.ElapsedStdDevMS,
+                        memBytes = timedOut ? (long?)null : statsMeasurement.PeakMemoryBytes,
+                        cpuTimeMS = timedOut ? (double?)null : statsMeasurement.CpuTime.TotalMilliseconds,
+                        cpuTimeUserMS = timedOut ? (double?)null : statsMeasurement.CpuTimeUser.TotalMilliseconds,
+                        cpuTimeKernelMS = timedOut ? (double?)null : statsMeasurement.CpuTimeKernel.TotalMilliseconds,
                         githubRunId = GithubActionUtils.RunId,
                         githubRepository = Environment.GetEnvironmentVariable("GITHUB_REPOSITORY"),
                         githubSha = Environment.GetEnvironmentVariable("GITHUB_SHA"),

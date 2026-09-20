@@ -10,7 +10,7 @@ runtime_version_regex:
 source_rename_to: app.ha
 environments:
   - os: linux
-    compiler: nelua/clang
+    compiler: hare
     version: latest
     include:
     build: hare build -v -o out/app

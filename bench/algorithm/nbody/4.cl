@@ -25,7 +25,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload :sb-simd :silent t)
-  (use-package :sb-simd-avx2)
+  (use-package :sb-simd-avx)
 
   (defconstant +DAYS-PER-YEAR+ 365.24d0)
   (defconstant +SOLAR-MASS+ (* 4d0 pi pi))

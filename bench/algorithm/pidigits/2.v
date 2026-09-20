@@ -29,10 +29,8 @@ fn main() {
 	mut w := zero
 
 	mut sb := strings.new_builder(12 + n.str().len)
-	unsafe {
-		defer {
-			sb.free()
-		}
+	defer {
+		unsafe { sb.free() }
 	}
 	for {
 		u = n1 / d

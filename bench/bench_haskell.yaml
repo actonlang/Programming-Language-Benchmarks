@@ -19,9 +19,7 @@ environments:
     compiler: ghc
     version: latest
     docker: haskell
-    include: haskell
-    include_sub_dir: app
-    build: cabal install --install-method=copy --installdir=out
+    build: ghc -O2 -threaded -rtsopts -with-rtsopts=-N -XBangPatterns -XScopedTypeVariables Main.hs -o out/app-exe
     after_build:
     out_dir: out
     run_cmd: app-exe

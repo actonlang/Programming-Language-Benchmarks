@@ -14,12 +14,14 @@ type BenchResult = {
   test: string
   input: string
   code: string
-  timeMS: number
-  timeStdDevMS: number
-  memBytes: number
-  cpuTimeMS: number
-  cpuTimeUserMS: number
-  cpuTimeKernelMS: number
+  status?: 'ok' | 'timeout'
+  timeoutSeconds?: number
+  timeMS: number | null
+  timeStdDevMS: number | null
+  memBytes: number | null
+  cpuTimeMS: number | null
+  cpuTimeUserMS: number | null
+  cpuTimeKernelMS: number | null
 
   compilerOptions?: string
 

@@ -25,28 +25,28 @@ fn main() {
 	}
 
 	mut iub := {
-		byte(`a`): 0.27
-		byte(`c`): 0.12
-		byte(`g`): 0.12
-		byte(`t`): 0.27
-		byte(`B`): 0.02
-		byte(`D`): 0.02
-		byte(`H`): 0.02
-		byte(`K`): 0.02
-		byte(`M`): 0.02
-		byte(`N`): 0.02
-		byte(`R`): 0.02
-		byte(`S`): 0.02
-		byte(`V`): 0.02
-		byte(`W`): 0.02
-		byte(`Y`): 0.02
+		u8(`a`): 0.27
+		u8(`c`): 0.12
+		u8(`g`): 0.12
+		u8(`t`): 0.27
+		u8(`B`): 0.02
+		u8(`D`): 0.02
+		u8(`H`): 0.02
+		u8(`K`): 0.02
+		u8(`M`): 0.02
+		u8(`N`): 0.02
+		u8(`R`): 0.02
+		u8(`S`): 0.02
+		u8(`V`): 0.02
+		u8(`W`): 0.02
+		u8(`Y`): 0.02
 	}
 
 	mut homosapiens := {
-		byte(`a`): 0.3029549426680
-		byte(`c`): 0.1979883004921
-		byte(`g`): 0.1975473066391
-		byte(`t`): 0.3015094502008
+		u8(`a`): 0.3029549426680
+		u8(`c`): 0.1979883004921
+		u8(`g`): 0.1975473066391
+		u8(`t`): 0.3015094502008
 	}
 
 	make_repeat_fasta('ONE', 'Homo sapiens alu', alu, n * 2)
@@ -54,14 +54,12 @@ fn main() {
 	make_random_fasta(mut rand, 'THREE', 'Homo sapiens frequency', mut homosapiens, n * 5)
 }
 
-fn make_repeat_fasta(id string, desc string, src []byte, n int) {
+fn make_repeat_fasta(id string, desc string, src []u8, n int) {
 	println('>${id} ${desc}')
 	mut char_print_idx := 0
 	mut sb := strings.new_builder(line_width)
-	unsafe {
-		defer {
-			sb.free()
-		}
+	defer {
+		unsafe { sb.free() }
 	}
 	for _ in 0 .. (n / src.len + 1) {
 		for c in src {
@@ -82,7 +80,7 @@ fn make_repeat_fasta(id string, desc string, src []byte, n int) {
 	}
 }
 
-fn make_random_fasta(mut rand_gen RandGen, id string, desc string, mut table map[byte]f64, n int) {
+fn make_random_fasta(mut rand_gen RandGen, id string, desc string, mut table map[u8]f64, n int) {
 	println('>${id} ${desc}')
 	mut prob := 0.0
 	for k, p in table {
@@ -92,10 +90,8 @@ fn make_random_fasta(mut rand_gen RandGen, id string, desc string, mut table map
 
 	mut n_char_printed := 0
 	mut sb := strings.new_builder(line_width)
-	unsafe {
-		defer {
-			sb.free()
-		}
+	defer {
+		unsafe { sb.free() }
 	}
 	for _ in 0 .. n {
 		rand := rand_gen.gen_random()

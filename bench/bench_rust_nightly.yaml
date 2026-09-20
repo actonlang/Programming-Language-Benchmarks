@@ -23,7 +23,7 @@ environments:
     compiler: rustc
     version: nightly
     env:
-      RUSTFLAGS: -Ctarget-cpu=broadwell
+      RUSTFLAGS: -Ctarget-cpu=native
       CC: clang
       CXX: clang++
     include: rust-nightly

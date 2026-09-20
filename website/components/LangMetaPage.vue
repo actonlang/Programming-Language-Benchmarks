@@ -189,19 +189,31 @@
                 </td>
                 <!-- <td class="text-right">{{ i.input }}</td> -->
                 <td class="text-right">
-                  {{ msToText(i.timeMS) }}
+                  {{
+                    i.timeout && i.timeoutSeconds
+                      ? `timeout (${i.timeoutSeconds}s)`
+                      : msToText(i.timeMS)
+                  }}
                 </td>
                 <td :class="['text-right', mdHide]">
-                  {{ msToFixed(i.timeStdDevMS) }}ms
+                  {{ i.timeout ? '—' : `${msToFixed(i.timeStdDevMS)}ms` }}
                 </td>
                 <td class="text-right">
-                  {{ (i.memBytes / (1024 * 1024)).toFixed(1) }}MB
+                  {{
+                    i.timeout
+                      ? '—'
+                      : `${((i.memBytes || 0) / (1024 * 1024)).toFixed(1)}MB`
+                  }}
                 </td>
                 <td :class="['text-right', mdHide]">
-                  {{ i.cpuTimeUserMS.toFixed(0) }}ms
+                  {{
+                    i.timeout ? '—' : `${(i.cpuTimeUserMS || 0).toFixed(0)}ms`
+                  }}
                 </td>
                 <td :class="['text-right', mdHide]">
-                  {{ i.cpuTimeKernelMS.toFixed(0) }}ms
+                  {{
+                    i.timeout ? '—' : `${(i.cpuTimeKernelMS || 0).toFixed(0)}ms`
+                  }}
                 </td>
                 <td class="text-left pl-5" :title="getFullCompilerVersion(i)">
                   {{ i.compiler }} {{ i.compilerVersion }}
@@ -319,11 +331,12 @@ export default class LangMetaPage extends Vue {
     this.isMenuOn = !this.isMenuOn
   }
 
-  msToText(ms: number): string {
-    return ms <= 0 ? 'timeout' : `${this.msToFixed(ms)}ms`
+  msToText(ms: number | null): string {
+    return ms === null || ms <= 0 ? 'timeout' : `${this.msToFixed(ms)}ms`
   }
 
-  msToFixed(ms: number): string {
+  msToFixed(ms: number | null): string {
+    if (ms === null) return '—'
     return ms < 10 ? ms.toFixed(1) : ms.toFixed(0)
   }
 

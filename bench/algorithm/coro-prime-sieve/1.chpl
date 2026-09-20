@@ -5,11 +5,13 @@ config const n = 10;
 record Channel {
     var ch: sync int;
 
-    proc send(i: int) {
+    proc init() {}
+
+    proc ref send(i: int) {
         ch.writeEF(i);
     }
 
-    proc receive(): int {
+    proc ref receive(): int {
         return ch.readFE();
     }
 }
@@ -17,21 +19,21 @@ record Channel {
 proc main() {
   var channels = new list(Channel);
   for i in 1..n {
-      channels.append(new Channel());
+      channels.pushBack(new Channel());
   }
-  begin generate(channels[0]);
+  begin with (ref channels) generate(channels[0]);
   for i in 1..n {
     ref ch = channels[i-1];
     const prime = ch.receive();
     writeln(prime);
     if i < n {
-        begin filter(ch, channels[i], prime);
+        begin with (ref ch, ref channels) filter(ch, channels[i], prime);
     }
   }
   exit(0);
 }
 
-proc generate(ch: Channel) {
+proc generate(ref ch: Channel) {
     var i = 2;
     do {
         ch.send(i);
@@ -39,7 +41,7 @@ proc generate(ch: Channel) {
     } while(true);
 }
 
-proc filter(chIn: Channel, chOut: Channel, prime: int) {
+proc filter(ref chIn: Channel, ref chOut: Channel, prime: int) {
     do {
         const i = chIn.receive();
         if i % prime != 0 {

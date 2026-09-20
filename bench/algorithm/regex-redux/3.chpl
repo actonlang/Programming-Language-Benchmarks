@@ -30,20 +30,19 @@ proc main(args: [] string) {
   ];
 
   var data: bytes;
-  const file = open(n, iomode.r),
-    reader = file.reader(kind=ionative, locking=false);
-  reader.readbytes(data);
-  // stdin.readbytes(data); // read in the entire file
+  const file = open(n, ioMode.r),
+    reader = file.reader(locking=false);
+  reader.readAll(data);
   const initLen = data.size;
 
   // remove newlines
-  data = compile(b">.*\n|\n").sub(b"", data);
+  data = data.replace(new regex(b">.*\n|\n"), b"");
 
   var results: [variants.domain] int;
 
   // count patterns
   for (pattern, result) in zip(variants, results) do
-    for m in compile(pattern).matches(data) do
+    for m in (new regex(pattern)).matches(data) do
       result += 1;
 
   // print results
@@ -54,6 +53,6 @@ proc main(args: [] string) {
   writeln(initLen);
   writeln(data.size);
   for (f, r) in subst do
-     data = compile(f).sub(r, data);
+     data = data.replace(new regex(f), r);
   writeln(data.size);
 }

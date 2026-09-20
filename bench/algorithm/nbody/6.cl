@@ -6,7 +6,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload :sb-simd :silent t)
-  (use-package :sb-simd-fma))
+  (use-package :sb-simd-avx))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defconstant +DAYS-PER-YEAR+ 365.24d0)
@@ -84,7 +84,8 @@
 (declaim (ftype (function (f64.4 f64.4) f64) dot)
          (inline dot length-sq length_))
 (defun dot (a b)
-  (f64.4-hsum (f64.4* a b)))
+  (multiple-value-bind (x y z w) (f64.4-values (f64.4* a b))
+    (+ x y z w)))
 
 (declaim (ftype (function (f64.4) f64) length-sq  length_))
 (defun length-sq (a)
@@ -101,7 +102,7 @@
   (loop for bi in system
         with pos = (f64.4 0)
         with sun = (car system) do
-          (setf pos (f64.4-fmadd213 (vel bi) (mass bi) pos)
+          (setf pos (f64.4+ (f64.4* (vel bi) (mass bi)) pos)
                 (vel sun) (f64.4* pos (/ (- +SOLAR-MASS+))))))
 
 ;; Advances with timestem dt = 1.0d0
@@ -119,8 +120,8 @@
                (dst (f64.4-sqrt dsq))
                (mag (f64.4/ (f64.4* dsq dst)))
                (pd-mag (f64.4* pd mag)))
-          (setf (vel bi) (f64.4-fnmadd213 pd-mag (mass bj) (vel bi))
-                (vel bj) (f64.4-fmadd213  pd-mag (mass bi) (vel bj))))))
+          (setf (vel bi) (f64.4- (vel bi) (f64.4* pd-mag (mass bj)))
+                (vel bj) (f64.4+ (f64.4* pd-mag (mass bi)) (vel bj))))))
     (loop for b in system do
       (f64.4-incf (pos b) (vel b)))))
 

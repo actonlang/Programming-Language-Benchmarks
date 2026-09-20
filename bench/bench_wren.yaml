@@ -1,5 +1,4 @@
 lang: wren
-enabled: false
 problems:
   - name: helloworld
     source:
@@ -29,4 +28,5 @@ environments:
     include: wren
     build: cp app.wren out
     out_dir: out
+    runtime_included: false
     run_cmd: wren_cli app.wren

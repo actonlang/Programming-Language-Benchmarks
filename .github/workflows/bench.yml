@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Check outputs or collect measurements
+        type: choice
+        options: [check, measure]
+        default: measure
+      languages:
+        description: All languages, or a comma-separated selection for troubleshooting
+        type: string
+        default: all
   schedule:
     - cron: "0 3 * * 1"
 
@@ -13,72 +23,93 @@ permissions:
   contents: read
 
 concurrency:
-  group: bench-${{ github.ref }}
+  group: bench-${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'measure') }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bench:
-    # Only main may use the dedicated runner; PRs use hosted runners.
-    runs-on: ${{ fromJSON(github.ref == 'refs/heads/main' && vars.BENCHMARK_RUNNER || '["ubuntu-24.04"]') }}
-    timeout-minutes: 90
-    env:
-      PYTHONINTMAXSTRDIGITS: "0"
-      GOTOOLCHAIN: local
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      languages: ${{ steps.plan.outputs.languages }}
+      has_work: ${{ steps.plan.outputs.has_work }}
+      measure: ${{ steps.plan.outputs.measure }}
+      publish: ${{ steps.plan.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+        with:
+          fetch-depth: 0
+      - run: sudo apt-get update && sudo apt-get install -y python3-yaml
+      - id: plan
         env:
-          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+          REQUESTED_LANGUAGES: ${{ inputs.languages }}
+          REQUESTED_MODE: ${{ inputs.mode }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          /usr/bin/python3 bench/tests/test_suite.py
+          /usr/bin/python3 .github/suite.py plan
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.26.x"
-          cache: false
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Install native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang libomp-dev libgmp-dev pkg-config python3-pip unzip
-      - name: Install Acton
-        run: bash .github/acton.sh
       - name: Check measurement failure handling
         run: python3 bench/tests/test_measurements.py
-      - name: Record machine and compiler versions
-        run: |
-          mkdir -p bench/build
-          {
-            date --utc --iso-8601=seconds
-            uname -a
-            lscpu
-            acton version
-            clang --version
-            rustc --version
-            cargo --version
-            go version
-            python3 --version
-            dotnet --info
-          } > bench/build/environment.txt
-      - name: Build and check benchmark programs
-        if: github.event_name == 'pull_request'
-        run: bash .github/bench.sh
-      - name: Build, check, and measure benchmark programs
-        if: github.event_name != 'pull_request'
-        run: bash .github/bench.sh measure
+
+  language:
+    needs: plan
+    if: needs.plan.outputs.has_work == 'true'
+    # PRs always use hosted runners. All measurements share one dedicated runner.
+    runs-on: ${{ fromJSON(needs.plan.outputs.measure == 'true' && '["self-hosted", "Linux", "X64", "perf"]' || '["ubuntu-24.04"]') }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ needs.plan.outputs.measure == 'true' && 1 || 8 }}
+      matrix:
+        language: ${{ fromJSON(needs.plan.outputs.languages) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update the dedicated runner cleanup hook
+        if: needs.plan.outputs.measure == 'true' && runner.name == 'actest1'
+        run: sudo install -D -m 755 .github/runner-cleanup.sh /opt/actest1/runner-cleanup.sh
+      - name: Build and check programs, then measure when requested
+        run: bash .github/run-language.sh '${{ needs.plan.outputs.measure == 'true' && 'measure' || 'check' }}' '${{ matrix.language }}'
       - name: Preserve results
-        if: github.event_name != 'pull_request'
+        if: needs.plan.outputs.measure == 'true'
         uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.language }}
+          path: |
+            bench/build/_results/
+            bench/build/environment-*.txt
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: true
+
+  results:
+    needs: [plan, language]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y python3-yaml
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-results-*
+          merge-multiple: true
+          path: bench/build
+      - name: Require complete results from this revision and run
+        run: /usr/bin/python3 .github/suite.py verify-results all
+      - uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: |
             bench/build/_results/
-            bench/build/environment.txt
+            bench/build/environment-*.txt
           if-no-files-found: error
           retention-days: 90
+          overwrite: true
 
   publish:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: bench
+    needs: results
     permissions:
       contents: read
       pages: write

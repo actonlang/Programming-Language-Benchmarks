@@ -13,7 +13,7 @@ environments:
     compiler: nelua/clang
     version: latest
     include:
-    build: nelua app.nelua --release -M --cc "clang -march=broadwell" --strip-bin --verbose -o out/app
+    build: nelua app.nelua --release -M --cc "clang -march=native" --strip-bin --verbose -o out/app
     out_dir: out
     run_cmd: app
     allow_failure: true

@@ -6,7 +6,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload :sb-simd :silent t)
-  (use-package :sb-simd-avx2))
+  (use-package :sb-simd-avx))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defconstant +DAYS-PER-YEAR+ 365.24d0)
@@ -84,7 +84,8 @@
 (declaim (ftype (function (f64.4 f64.4) f64) dot)
          (inline dot length-sq length_))
 (defun dot (a b)
-  (f64.4-hsum (f64.4* a b)))
+  (multiple-value-bind (x y z w) (f64.4-values (f64.4* a b))
+    (+ x y z w)))
 
 (declaim (ftype (function (f64.4) f64) length-sq  length_))
 (defun length-sq (a)

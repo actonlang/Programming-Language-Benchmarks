@@ -1,5 +1,6 @@
 (declaim (optimize (speed 3)(safety 0)(space 0)(debug 0)))
 
+(require :asdf)
 (load "app.cl")
 (progn (sb-ext:disable-debugger)
        (sb-ext:save-lisp-and-die 

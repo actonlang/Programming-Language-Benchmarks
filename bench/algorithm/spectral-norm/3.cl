@@ -89,7 +89,12 @@
     (loop repeat 10 do
       (eval-AtA-times-u u v tmp 0 n n)
       (eval-AtA-times-u v u tmp 0 n n))
-    (sqrt (f64/ (f64.2-vdot u v) (f64.2-vdot v v)))))
+    (loop with uv of-type f64 = 0d0
+          with vv of-type f64 = 0d0
+          for i of-type u32 below n
+          do (incf uv (* (aref u i) (aref v i)))
+             (incf vv (* (aref v i) (aref v i)))
+          finally (return (sqrt (/ uv vv))))))
 
 (defun main (&optional n-supplied)
   (let ((n (or n-supplied (parse-integer (or (car (last sb-ext:*posix-argv*))

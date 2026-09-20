@@ -26,7 +26,7 @@ export function mergeLangBenchResults(
   benchResults.forEach((i) => {
     i.compilerVersion = getRealShortCompilerVersion(i)
     i.par = useParallelization(i)
-    i.timeout = i.timeMS <= 0
+    i.timeout = i.status === 'timeout' || i.timeMS === null || i.timeMS <= 0
   })
 
   const groupsByLang = _.chain(benchResults)
@@ -73,7 +73,12 @@ export function useParallelization(i: BenchResult): boolean {
   if (/-\w?m/.test(i.code)) {
     return true
   }
-  return i.timeMS > 0 && i.timeMS * 1.5 <= i.cpuTimeMS
+  return (
+    i.timeMS !== null &&
+    i.cpuTimeMS !== null &&
+    i.timeMS > 0 &&
+    i.timeMS * 1.5 <= i.cpuTimeMS
+  )
 }
 
 export function getBuildLogUrl(i: BenchResult): string {
