@@ -23,7 +23,8 @@ fn main() {
 fn generate(ch chan int) {
 	mut i := 2
 	for {
-		ch <- i++
+		ch <- i
+		i++
 	}
 }
 

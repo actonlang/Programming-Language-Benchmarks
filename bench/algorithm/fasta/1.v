@@ -58,10 +58,8 @@ fn make_repeat_fasta(id string, desc string, src []byte, n int) {
 	println('>${id} ${desc}')
 	mut char_print_idx := 0
 	mut sb := strings.new_builder(line_width)
-	unsafe {
-		defer {
-			sb.free()
-		}
+	defer {
+		unsafe { sb.free() }
 	}
 	for _ in 0 .. (n / src.len + 1) {
 		for c in src {
@@ -92,10 +90,8 @@ fn make_random_fasta(mut rand_gen RandGen, id string, desc string, mut table map
 
 	mut n_char_printed := 0
 	mut sb := strings.new_builder(line_width)
-	unsafe {
-		defer {
-			sb.free()
-		}
+	defer {
+		unsafe { sb.free() }
 	}
 	for _ in 0 .. n {
 		rand := rand_gen.gen_random()
