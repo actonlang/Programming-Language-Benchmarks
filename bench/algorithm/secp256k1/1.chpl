@@ -257,5 +257,5 @@ proc main() {
   for 1..n {
     point = point.multiply(private_key);
   } 
-  writef("%s,%s\n", point.x.get_str(16), point.y.get_str(16));
+  writef("%s,%s\n", point.x.getStr(16), point.y.getStr(16));
 }

@@ -1,4 +1,4 @@
-use BigInteger;
+use BigInteger, Math;
 
 config const n = 27;
 
@@ -9,7 +9,7 @@ proc main() {
   p += q;
   const a = new bigint(10) ** (n - 1);
   const answer = p * a  / q;
-  const s = answer.get_str();
+  const s = answer: string;
   var i = 0;
   while(i+10<=n){
     const end = i+10;

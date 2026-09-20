@@ -17,7 +17,7 @@ record Channel {
 proc main() {
   var channels = new list(Channel);
   for i in 1..n {
-      channels.append(new Channel());
+      channels.pushBack(new Channel());
   }
   begin generate(channels[0]);
   for i in 1..n {

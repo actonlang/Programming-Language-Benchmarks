@@ -12,25 +12,31 @@ config param tableSize = 2**16,
 config const n = "25000_in";
 
 proc main(args: [] string) {
-  const file = open(n, iomode.r),
+  const file = open(n, ioMode.r),
     fileLen = file.size,
-    reader = file.reader(kind=ionative, locking=false);
+    reader = file.reader(locking=false);
 
   // Read line-by-line until we see a line beginning with '>TH'
   var buff: [1..columns] uint(8),
       lineSize = 0,
       numRead = 0;
 
-  while reader.readline(buff, lineSize) && !startsWithThree(buff) do
+  while true {
+    lineSize = reader.readLine(buff);
+    if lineSize == 0 || startsWithThree(buff) then break;
     numRead += lineSize;
+  }
 
   // Read in the rest of the file
   var dataDom = {1..fileLen-numRead},
       data: [dataDom] uint(8),
       idx = 1;
 
-  while reader.readline(data, lineSize, idx) do
+  while true {
+    lineSize = reader.readLine(data[idx..]);
+    if lineSize == 0 then break;
     idx += lineSize - 1;
+  }
 
   // Resize our array to the amount actually read
   dataDom = {1..idx};
@@ -56,7 +62,7 @@ proc writeFreqs(data, param nclSize) {
   var arr = for (s,f) in freqs.items() do (f,s);
 
   // print the array, sorted by decreasing frequency
-  for (f, s) in arr.sorted(reverseComparator) do
+  for (f, s) in sorted(arr, comparator=new reverseComparator()) do
    writef("%s %.3dr\n", decode(s, nclSize),
            (100.0 * f) / (data.size - nclSize));
   writeln();
