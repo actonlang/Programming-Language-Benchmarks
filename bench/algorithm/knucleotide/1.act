@@ -3,14 +3,27 @@
 
 import file
 
-def frequencies(sequence: bytes, k: int) -> dict[int, int]:
-    counts: dict[int, int] = {}
+class Counter(object):
+    value: int
+
+    def __init__(self, value: int):
+        self.value = value
+
+    def increment(self):
+        self.value += 1
+
+def frequencies(sequence: bytes, k: int) -> dict[int, Counter]:
+    counts: dict[int, Counter] = {}
     mask = (1 << (2 * k)) - 1
     key = 0
     for i in range(len(sequence)):
         key = ((key << 2) | ((sequence[i] >> 1) & 3)) & mask
         if i >= k - 1:
-            counts[key] = counts[key] + 1 if key in counts else 1
+            counter = counts.get(key)
+            if counter is not None:
+                counter.increment()
+            else:
+                counts[key] = Counter(1)
     return counts
 
 def compress(text: str) -> int:
@@ -43,12 +56,12 @@ actor main(env):
     sequence = b"".join(parts)
     for k in [1, 2]:
         counts = frequencies(sequence, k)
-        rows = [(-count, decompress(key, k)) for key, count in counts.items()]
+        rows = [(-count.value, decompress(key, k)) for key, count in counts.items()]
         for negative_count, text in sorted(rows):
             print("%s %.3f" % (text, -100.0 * float(negative_count) / float(len(sequence) - k + 1)))
         print("")
     for text in ["GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT"]:
         counts = frequencies(sequence, len(text))
         key = compress(text)
-        print("%d\t%s" % (counts[key] if key in counts else 0, text))
+        print("%d\t%s" % (counts[key].value if key in counts else 0, text))
     env.exit(0)
