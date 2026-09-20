@@ -14,7 +14,7 @@ flock 9
 # other services on the runner.
 if ! command -v podman >/dev/null; then
   sudo -n apt-get update
-  sudo -n apt-get install -y --no-install-recommends podman
+  sudo -n apt-get install -y --no-install-recommends podman containernetworking-plugins catatonit
 fi
 storage=/var/lib/acton-bench-containers
 engine=(sudo -n podman --root "$storage" --runroot /run/acton-bench-containers)
@@ -40,6 +40,7 @@ echo "::group::Prepare $language toolchain"
 "${engine[@]}" build --layers --pull=always \
   --build-arg "TOOLCHAIN_IMAGE=$toolchain_image" \
   --build-arg "BENCH_LANGUAGE=$language" --build-arg "BENCH_UID=$(id -u)" \
+  --build-arg "BENCH_RUN_ID=${GITHUB_RUN_ID:-$(date -u +%s)}" \
   --tag "$image" .github/containers
 echo "::endgroup::"
 

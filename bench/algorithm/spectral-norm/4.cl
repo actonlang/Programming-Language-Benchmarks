@@ -28,7 +28,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload '(:sb-simd :serapeum) :silent t)
-  (use-package  '(:sb-simd-avx2 :serapeum)))
+  (use-package  '(:sb-simd-avx :serapeum)))
 
 (-> eval-A (f64.2 f64.2) f64.2)
 (define-inline eval-A (i j)

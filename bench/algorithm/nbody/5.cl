@@ -6,7 +6,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload :sb-simd :silent t)
-  (use-package :sb-simd-avx2))
+  (use-package :sb-simd-avx))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defconstant +DAYS-PER-YEAR+ 365.24d0)

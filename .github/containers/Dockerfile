@@ -26,6 +26,7 @@ ARG BENCH_LANGUAGE
 ARG BENCH_UID=1000
 LABEL org.actonlang.benchmarks=true
 COPY setup-language.sh /opt/setup-language.sh
+ARG BENCH_RUN_ID
 RUN bash /opt/setup-language.sh "$BENCH_LANGUAGE" \
     && (getent passwd "$BENCH_UID" || useradd --uid "$BENCH_UID" --home-dir /opt/bench-home --no-create-home benchmark) \
     && chown -R "$BENCH_UID" /opt/bench-home \

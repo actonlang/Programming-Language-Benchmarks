@@ -26,7 +26,10 @@ case "$language" in
     chown -R "$BENCH_UID" /opt/acton
     ln -s /opt/acton/bin/acton /usr/local/bin/acton
     ;;
-  c|cpp|chapel|dart|elixir|go|hacklang|java|kotlin|python|swift)
+  c|cpp|dart|elixir|go|hacklang|java|kotlin|python|swift)
+    ;;
+  chapel)
+    echo "export CHPL_UNWIND=bundled" >> "$PROFILE"
     ;;
   codon)
     curl --fail --location --retry 3 https://exaloop.io/install.sh -o /tmp/codon.sh
@@ -42,7 +45,9 @@ case "$language" in
     dotnet dev-certs https
     ;;
   d)
-    apt_install ldc dub
+    apt_install dub
+    archive https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-linux-x86_64.tar.xz /opt/ldc
+    ln -s /opt/ldc/bin/ldc2 /usr/local/bin/ldc2
     ;;
   fortran)
     apt_install gfortran
@@ -62,7 +67,7 @@ case "$language" in
     make -C /tmp/hare install PREFIX=/usr/local
     ;;
   haskell)
-    apt_install ghc cabal-install
+    apt_install ghc
     ;;
   haxe)
     apt_install haxe
@@ -80,6 +85,11 @@ case "$language" in
     ;;
   lisp)
     apt_install sbcl
+    curl --fail --location --retry 3 https://beta.quicklisp.org/quicklisp.lisp -o /tmp/quicklisp.lisp
+    sbcl --non-interactive --load /tmp/quicklisp.lisp \
+      --eval '(quicklisp-quickstart:install)' \
+      --eval '(ql-util:without-prompting (ql:add-to-init-file))'
+    sbcl --non-interactive --eval '(ql:quickload (list :sb-simd :serapeum))'
     ;;
   lua)
     apt_install lua5.4 luajit
@@ -116,6 +126,7 @@ case "$language" in
     apt_install php-cli php-gmp
     ;;
   pony)
+    apt_install lsb-release
     curl --fail --location --retry 3 https://raw.githubusercontent.com/ponylang/ponyup/latest-release/ponyup-init.sh -o /tmp/ponyup.sh
     sh /tmp/ponyup.sh
     ponyup update ponyc release

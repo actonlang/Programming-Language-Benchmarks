@@ -16,7 +16,7 @@
 ;;      * use right shift instead of truncate for division in eval-A
 ;;      * redefine eval-A as a macro
 ;;    Modified by Bela Pecsek
-;;      * Using SSE registers but AVX2 VEX vector instruction sets
+;;      * Using SSE registers but AVX VEX vector instruction sets
 ;;      * Improvement in type declarations
 ;;      * Redefine eval-A as inlined function using sse simd
 ;;      * Changed code to be compatible with sb-simd
@@ -27,7 +27,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload '(:sb-simd :serapeum) :silent t)
-  (use-package  '(:sb-simd-avx2 :serapeum)))
+  (use-package  '(:sb-simd-avx :serapeum)))
 
 (-> eval-A (f64.2 f64.2) f64.2)
 (define-inline eval-A (i j)
