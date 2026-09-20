@@ -67,6 +67,9 @@ jobs:
         language: ${{ fromJSON(needs.plan.outputs.languages) }}
     steps:
       - uses: actions/checkout@v4
+      - name: Update the dedicated runner cleanup hook
+        if: needs.plan.outputs.measure == 'true' && runner.name == 'actest1'
+        run: sudo install -D -m 755 .github/runner-cleanup.sh /opt/actest1/runner-cleanup.sh
       - name: Build and check programs, then measure when requested
         run: bash .github/run-language.sh '${{ needs.plan.outputs.measure == 'true' && 'measure' || 'check' }}' '${{ matrix.language }}'
       - name: Preserve results

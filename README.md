@@ -35,11 +35,12 @@ and the image cache is cleared before a build when it exceeds 30 GiB.
 jobs from the Acton repository. It removes untracked checkout output after
 artifact uploads, clears APT downloads, and resets compiler caches when they
 exceed their limits: 8 GiB for Acton, 2 GiB for Zig, and 4 GiB per Rust target
-directory. The next job also clears leftovers from an interrupted run.
+directory. The next job also stops abandoned benchmark containers before clearing
+leftovers from an interrupted run.
 The hook takes the same performance lock and preserves tracked source files.
 Benchmark scratch files live inside the job container and disappear when it exits.
 
-To install or update it on `actest1`, copy it to
+Measurement jobs update the installed hook. For initial setup on `actest1`, copy it to
 `/opt/actest1/runner-cleanup.sh` with executable permissions. Set both
 `ACTIONS_RUNNER_HOOK_JOB_STARTED` and `ACTIONS_RUNNER_HOOK_JOB_COMPLETED` to that
 absolute path in the runner service environment, then restart the idle service.

@@ -14,6 +14,15 @@ mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}"
 exec 9>"${XDG_STATE_HOME:-$HOME/.local/state}/acton-perf.lock"
 flock --wait 120 9
 
+# Stop containers left by an interrupted job before touching their checkout.
+if command -v podman >/dev/null && [[ -d /var/lib/acton-bench-containers ]]; then
+  engine=(sudo -n podman --root /var/lib/acton-bench-containers --runroot /run/acton-bench-containers)
+  mapfile -t abandoned < <("${engine[@]}" ps --all --quiet 9>&-)
+  if (( ${#abandoned[@]} )); then
+    timeout 120 "${engine[@]}" rm --force "${abandoned[@]}" 9>&-
+  fi
+fi
+
 if [[ -d "$workspace/.git" ]]; then
   [[ "$(realpath "$workspace")" == "$workspace" ]]
   timeout 120 git -C "$workspace" clean -ffdx

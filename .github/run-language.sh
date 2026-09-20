@@ -18,19 +18,19 @@ if ! command -v podman >/dev/null; then
 fi
 storage=/var/lib/acton-bench-containers
 engine=(sudo -n podman --root "$storage" --runroot /run/acton-bench-containers)
-mapfile -t abandoned < <("${engine[@]}" ps --all --quiet)
+mapfile -t abandoned < <("${engine[@]}" ps --all --quiet 9>&-)
 if (( ${#abandoned[@]} )); then
-  "${engine[@]}" rm --force "${abandoned[@]}"
+  "${engine[@]}" rm --force "${abandoned[@]}" 9>&-
 fi
 if [[ -d "$storage" ]] && (( $(sudo -n du -sk "$storage" | cut -f1) > 31457280 )); then
-  "${engine[@]}" system prune --all --force
+  "${engine[@]}" system prune --all --force 9>&-
 fi
 
 image="localhost/acton-bench-${language}:latest"
 container="acton-bench-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}-${language}"
 cleanup() {
-  "${engine[@]}" rm --force "$container" >/dev/null 2>&1 || true
-  "${engine[@]}" image prune --force --filter label=org.actonlang.benchmarks=true
+  "${engine[@]}" rm --force "$container" 9>&- >/dev/null 2>&1 || true
+  "${engine[@]}" image prune --force --filter label=org.actonlang.benchmarks=true 9>&-
 }
 trap cleanup EXIT
 trap 'exit 130' INT
@@ -41,7 +41,7 @@ echo "::group::Prepare $language toolchain"
   --build-arg "TOOLCHAIN_IMAGE=$toolchain_image" \
   --build-arg "BENCH_LANGUAGE=$language" --build-arg "BENCH_UID=$(id -u)" \
   --build-arg "BENCH_RUN_ID=${GITHUB_RUN_ID:-$(date -u +%s)}" \
-  --tag "$image" .github/containers
+  --tag "$image" .github/containers 9>&-
 echo "::endgroup::"
 
 "${engine[@]}" run --rm --init --name "$container" \
@@ -54,7 +54,7 @@ echo "::endgroup::"
   --env "GITHUB_RUN_ATTEMPT=${GITHUB_RUN_ATTEMPT:-}" \
   --env "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-}" \
   --env "RUNNER_NAME=${RUNNER_NAME:-$(hostname)}" \
-  "$image" bash .github/bench.sh "$mode" "$language"
+  "$image" bash .github/bench.sh "$mode" "$language" 9>&-
 
 "${engine[@]}" image inspect "$image" --format '{{.Id}}' \
-  >> "bench/build/environment-${language}.txt"
+  >> "bench/build/environment-${language}.txt" 9>&-
