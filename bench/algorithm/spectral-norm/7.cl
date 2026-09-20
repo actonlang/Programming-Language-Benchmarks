@@ -29,11 +29,11 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload '(:sb-simd :serapeum) :silent t)
-  (use-package  '(:sb-simd-fma :serapeum)))
+  (use-package  '(:sb-simd-avx :serapeum)))
 
 (-> eval-A (f64.4) f64.4)
 (define-inline eval-A (i)
-  (f64.4-fmadd213 (f64.4* i 0.5) (f64.4+ i 1) 1))
+  (f64.4+ (f64.4* (f64.4* i 0.5) (f64.4+ i 1)) 1))
 
 (-> eval-A-times-u (boolean f64vec f64vec u32 u32 u32) null)
 (defun eval-A-times-u (transpose src dst begin end length)

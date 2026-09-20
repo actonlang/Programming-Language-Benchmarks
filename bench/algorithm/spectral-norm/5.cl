@@ -29,12 +29,12 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)  
   (ql:quickload '(:sb-simd :serapeum) :silent t)
-  (use-package  '(:sb-simd-fma :serapeum)))
+  (use-package  '(:sb-simd-avx :serapeum)))
 
 (-> eval-A (f32.8 f32.8) (values f64.4 f64.4))
 (define-inline eval-A (i j)
   (let* ((i+1   (f32.8+ i 1))
-         (evala (sb-simd-fma:f32.8-fmadd213 (f32.8+ i j) (f32.8* (f32.8+ i+1 j) 0.5) i+1)))
+         (evala (f32.8+ (f32.8* (f32.8+ i j) (f32.8* (f32.8+ i+1 j) 0.5)) i+1)))
     (values (f64.4-from-f32.4 (f32.8-extract128 evala 0))
             (f64.4-from-f32.4 (f32.8-extract128 evala 1)))))
 

@@ -2,7 +2,7 @@
 import std;
 import std.outbuffer : OutBuffer;
 
-alias Map = uint[Nullable!Code];
+alias Map = uint[Code];
 static double hundreed = 100.0;
 
 static struct Code
@@ -14,13 +14,13 @@ static struct Code
         data = ((data << 2) | cast(ulong) c) & mask;
     }
 
-    static Nullable!Code fromStr(ubyte[] s)
+    static Code fromStr(ubyte[] s)
     {
         auto mask = Code.makeMask(s.length);
         auto res = Code(0);
         foreach (c; s)
             res.push(Code.encodeByte(c), mask);
-        return nullable(res);
+        return res;
     }
 
     string toStr(size_t frame)
@@ -70,16 +70,16 @@ static struct CodeRange
 {
     size_t i = 0;
     ubyte[] input;
-    Nullable!Code code;
+    Code code;
     ulong mask;
 
     bool empty() {
         return this.i >= this.input.length;
     }
 
-    Nullable!Code front() {
+    Code front() {
         const c = this.input[this.i];
-        this.code.get.push(c, this.mask);
+        this.code.push(c, this.mask);
         return this.code;
     }
 
@@ -90,9 +90,9 @@ static struct CodeRange
     this(ubyte[] input, size_t frame)
     {
         const mask = Code.makeMask(frame);
-        Nullable!Code tmpCode = Code(0);
+        Code tmpCode = Code(0);
         foreach (c; input[0 .. frame - 1])
-            tmpCode.get.push(c, mask);
+            tmpCode.push(c, mask);
         this.mask = mask;
         this.code = tmpCode;
         this.input = input[frame - 1 .. $];
@@ -114,7 +114,7 @@ Map genMap(Tuple!(ubyte[], size_t) t)
 struct CountCode
 {
     ulong count;
-    Nullable!Code code;
+    Code code;
 }
 
 void printMap(size_t self, Map myMap, ref OutBuffer buf)
@@ -129,14 +129,14 @@ void printMap(size_t self, Map myMap, ref OutBuffer buf)
     }
     alias asc = (a, b) =>
         a.count < b.count ||
-        (a.count == b.count && b.code.get.data < a.code.get.data);
+        (a.count == b.count && b.code.data < a.code.data);
 
     v.sort!(asc);
 
     foreach (i; iota(cast(int)(v.length) - 1, -1, -1))
     {
         auto cc = v[i];
-        buf.writefln("%s %.3f", cc.code.get.toStr(self), cast(double) cc.count / cast(
+        buf.writefln("%s %.3f", cc.code.toStr(self), cast(double) cc.count / cast(
                 double) total * hundreed);
     }
     buf.write("\n");
@@ -188,7 +188,7 @@ void main(string[] args)
     ];
     auto input = readInput(args);
 
-    alias myTaskType = Task!(run, uint[Nullable!(Code)]function(Tuple!(ubyte[], ulong)), Tuple!(ubyte[], ulong))*;
+    alias myTaskType = Task!(run, uint[Code]function(Tuple!(ubyte[], ulong)), Tuple!(ubyte[], ulong))*;
     myTaskType[] calls;
     foreach (i; 0 .. occs.length)
     {

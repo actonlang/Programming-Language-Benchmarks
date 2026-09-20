@@ -106,7 +106,7 @@ case "$language" in
     ln -s /opt/nim/bin/nimble /usr/local/bin/nimble
     ;;
   ocaml)
-    apt_install opam
+    apt_install opam rsync
     opam init --disable-sandboxing --bare -y
     opam switch create 5.3.0 -y
     echo 'eval "$(opam env --switch=5.3.0 --set-switch)"' >> "$PROFILE"
