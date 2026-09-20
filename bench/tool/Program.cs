@@ -595,15 +595,6 @@ namespace BenchTool
 
                 if (error != null)
                 {
-                    await ProcessUtils.RunProcessAsync(
-                        runPsi,
-                        useShellExecute: true,
-                        printOnConsole: false,
-                        asyncRead: false,
-                        stdOutBuilder: null,
-                        stdErrorBuilder: null,
-                        env: null,
-                        default);
                     throw error;
                 }
             }

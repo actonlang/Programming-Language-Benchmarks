@@ -84,9 +84,15 @@ langs:
         self.assertEqual(records, [])
 
     def test_correct_output_with_nonzero_exit_fails(self):
-        result, records = self.run_tool("echo expected\nexit 7\n", task="test")
+        result, records = self.run_tool(
+            "attempt=$(cat attempts 2>/dev/null || echo 0)\n"
+            "attempt=$((attempt + 1))\necho $attempt > attempts\n"
+            "echo attempt-$attempt >&2\necho expected\nexit 7\n", task="test",
+        )
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Exit code: 7", result.stdout + result.stderr)
+        self.assertIn("attempt-3", result.stdout + result.stderr)
+        self.assertNotIn("attempt-4", result.stdout + result.stderr)
         self.assertEqual(records, [])
 
     def test_timeout_records_the_limit_without_measurements(self):
