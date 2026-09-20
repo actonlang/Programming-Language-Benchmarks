@@ -82,6 +82,7 @@ jobs:
             bench/build/environment-*.txt
           if-no-files-found: error
           retention-days: 90
+          overwrite: true
 
   results:
     needs: [plan, language]
@@ -105,6 +106,7 @@ jobs:
             bench/build/environment-*.txt
           if-no-files-found: error
           retention-days: 90
+          overwrite: true
 
   publish:
     needs: results
