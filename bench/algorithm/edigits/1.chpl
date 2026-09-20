@@ -55,6 +55,6 @@ proc test_k(n, k) {
         return false;
     }
     const ln_k_factorial = k * (log(k) - 1) + 0.5 * log(pi * 2);
-    const log_10_k_factorial = ln_k_factorial / ln_10;
+    const log_10_k_factorial = ln_k_factorial / ln10;
     return log_10_k_factorial >= n + 50;
 }
