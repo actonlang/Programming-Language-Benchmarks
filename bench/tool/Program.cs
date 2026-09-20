@@ -357,7 +357,9 @@ namespace BenchTool
             // Before Build
             await ProcessUtils.RunCommandsAsync(
                 langEnvConfig.BeforeBuild,
-                workingDir: tmpDir.FullPath).ConfigureAwait(false);
+                workingDir: tmpDir.FullPath,
+                ensureZeroExitCode: true,
+                env: langEnvConfig.Env).ConfigureAwait(false);
 
             // Check compiler version and save output
             string compilerVersionCommand = langEnvConfig.CompilerVersionCommand.FallBackTo(langConfig.CompilerVersionCommand);
@@ -435,6 +437,7 @@ namespace BenchTool
                     await ProcessUtils.RunCommandAsync(
                         buildCommand,
                         workingDir: tmpDir.FullPath,
+                        ensureZeroExitCode: true,
                         env: langEnvConfig.Env).ConfigureAwait(false);
                 }
                 else
@@ -442,6 +445,7 @@ namespace BenchTool
                     await ProcessUtils.RunCommandsAsync(
                         buildCommand.Split("&&", StringSplitOptions.RemoveEmptyEntries),
                         workingDir: tmpDir.FullPath,
+                        ensureZeroExitCode: true,
                         env: langEnvConfig.Env).ConfigureAwait(false);
                 }
             }
@@ -449,7 +453,9 @@ namespace BenchTool
             // After Build
             await ProcessUtils.RunCommandsAsync(
                 langEnvConfig.AfterBuild,
-                workingDir: tmpDir.FullPath).ConfigureAwait(false);
+                workingDir: tmpDir.FullPath,
+                ensureZeroExitCode: true,
+                env: langEnvConfig.Env).ConfigureAwait(false);
 
             if (Directory.Exists(buildOutput))
             {

@@ -25,6 +25,7 @@ class MeasurementTests(unittest.TestCase):
             root = Path(directory)
             (root / "algorithm/sample").mkdir(parents=True)
             (root / "algorithm/sample/expected").write_text("expected\n")
+            (root / "algorithm/sample/fixture.sh").write_text(script)
             (root / "include").mkdir()
             build = root / "build/fixture_linux_sh_test_default_sample_fixture"
             build.mkdir(parents=True)
@@ -51,11 +52,12 @@ langs:
         version: test
         run_cmd: /bin/sh fixture.sh
         runtime_included: false
+        build: /bin/sh -c "cp fixture.sh out/app; exit 7"
 """)
             env = os.environ.copy()
             env.pop("GITHUB_HEAD_REF", None)
             result = subprocess.run(
-                ["dotnet", str(TOOL), "--task", task, "--no-docker", "--fail-fast"],
+                ["dotnet", str(TOOL), "--task", task, "--no-docker", "--fail-fast", "--force-rebuild"],
                 cwd=root, env=env, text=True, capture_output=True, timeout=30,
             )
             records = [json.loads(p.read_text()) for p in (root / "build/_results").rglob("*.json")]
@@ -74,6 +76,12 @@ langs:
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertEqual(records, [])
                 self.assertIn("Benchmark exited with code 7", result.stdout + result.stderr)
+
+    def test_failed_build_with_output_is_rejected(self):
+        result, records = self.run_tool("echo expected\n", task="build")
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Non zero exit code 7", result.stdout + result.stderr)
+        self.assertEqual(records, [])
 
     def test_correct_output_with_nonzero_exit_fails(self):
         result, records = self.run_tool("echo expected\nexit 7\n", task="test")
