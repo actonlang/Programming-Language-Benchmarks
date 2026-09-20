@@ -44,7 +44,7 @@ echo "::group::Prepare $language toolchain"
   --tag "$image" .github/containers 9>&-
 echo "::endgroup::"
 
-"${engine[@]}" run --rm --init --name "$container" \
+"${engine[@]}" run --rm --init --pids-limit=-1 --name "$container" \
   --label org.actonlang.benchmarks=true \
   --user "$(id -u):$(id -g)" \
   --volume "$PWD:/work" \

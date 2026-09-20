@@ -21,7 +21,7 @@ outputs on hosted runners, selecting affected languages when possible. They do
 not collect or publish timings.
 
 Each language uses its own container with the same harness and inputs. The
-container runs on the host CPU without a CPU quota. The wrapper holds
+container runs on the host CPU without CPU or process-count quotas. The wrapper holds
 `~/.local/state/acton-perf.lock` throughout setup, checking, and measurement.
 Other measurements on the host must use that lock. A manual language selection
 supports troubleshooting; only a complete run publishes the website. A new full
