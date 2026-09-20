@@ -338,20 +338,37 @@ namespace BenchTool
             }, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
             Stopwatch sw = Stopwatch.StartNew();
-            int ret = await RunProcessAsync(
-                p,
-                printOnConsole: false,
-                asyncRead: true,
-                stdOutBuilder: null,
-                stdErrorBuilder: null,
-                env: env,
-                cts.Token,
-                onStart: () => manualResetEvent.Set()).ConfigureAwait(false);
+            int ret;
+            try
+            {
+                ret = await RunProcessAsync(
+                    p,
+                    printOnConsole: false,
+                    asyncRead: true,
+                    stdOutBuilder: null,
+                    stdErrorBuilder: null,
+                    env: env,
+                    cts.Token,
+                    onStart: () => manualResetEvent.Set()).ConfigureAwait(false);
+                cts.Token.ThrowIfCancellationRequested();
+            }
+            catch (OperationCanceledException) when (!token.IsCancellationRequested && cts.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Benchmark exceeded {timeoutSeconds}s: {startInfo.FileName} {startInfo.Arguments}");
+            }
+            finally
+            {
+                sw.Stop();
+                cts.Cancel();
+                try
+                {
+                    await t.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                {
+                }
+            }
 
-            sw.Stop();
-            cts.Cancel();
-
-            await t.ConfigureAwait(false);
             if (ret != 0)
             {
                 throw new InvalidOperationException($"Benchmark exited with code {ret}: {startInfo.FileName} {startInfo.Arguments}");

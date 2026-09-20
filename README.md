@@ -48,7 +48,9 @@ absolute path in the runner service environment, then restart the idle service.
 primary toolchains, including WebAssembly. It does not select every historical
 compiler release or experimental backend. `.github/suite.py` requires every
 selected program to build, pass correctness checks, and produce every expected
-result before publication. Toolchain versions, the container image ID, source
+result before publication. A program that passes correctness checks but exceeds
+a measurement time limit is shown as a timeout, without timing or memory values.
+Crashes and incomplete repetitions fail the job. Toolchain versions, the container image ID, source
 revision, and Actions run are recorded with the results.
 
 Native compiler optimizations target the CPU running the benchmark. Acton uses

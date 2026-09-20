@@ -71,10 +71,22 @@ langs:
                 self.assertEqual(records, [])
                 self.assertIn("Benchmark exited with code 7", result.stdout + result.stderr)
 
-    def test_timeout_never_publishes(self):
-        result, records = self.measure("sleep 2\n", timeout=1)
-        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(records, [])
+    def test_timeout_records_the_limit_without_measurements(self):
+        result, records = self.measure("sleep 2\n", timeout=1, repeat=3)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["status"], "timeout")
+        self.assertEqual(records[0]["timeoutSeconds"], 1)
+        for key in ("timeMS", "timeStdDevMS", "memBytes", "cpuTimeMS", "cpuTimeUserMS", "cpuTimeKernelMS"):
+            self.assertIsNone(records[0][key])
+
+    def test_timeout_discards_partial_repeats(self):
+        result, records = self.measure(
+            "if [ -f ran ]; then sleep 2; fi\ntouch ran\n", timeout=1, repeat=2,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(records[0]["status"], "timeout")
+        self.assertIsNone(records[0]["timeMS"])
 
     def test_incomplete_repeats_never_publish(self):
         result, records = self.measure(

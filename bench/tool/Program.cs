@@ -689,6 +689,7 @@ namespace BenchTool
                     repeat = 1;
                 }
 
+                bool timedOut = false;
                 ProcessMeasurement statsMeasurement = new ProcessMeasurement();
                 for (int nRetry = 0; nRetry < 5; nRetry++)
                 {
@@ -708,12 +709,22 @@ namespace BenchTool
                             Logger.Debug($"({buildId}){langConfig.Lang}:{problem.Name}:{test.Input} {measurement}");
                             measurements.Add(measurement);
                         }
+                        catch (TimeoutException e)
+                        {
+                            Logger.Warn(e.Message);
+                            timedOut = true;
+                            break;
+                        }
                         catch (Exception e)
                         {
                             Logger.Error(e);
                             i--;
                             maxRetries--;
                         }
+                    }
+                    if (timedOut)
+                    {
+                        break;
                     }
                     if (measurements.Count != repeat)
                     {
@@ -753,12 +764,14 @@ namespace BenchTool
                         test = problem.Name,
                         code = codePath,
                         input = test.Input,
-                        timeMS = statsMeasurement.Elapsed.TotalMilliseconds,
-                        timeStdDevMS = statsMeasurement.ElapsedStdDevMS,
-                        memBytes = statsMeasurement.PeakMemoryBytes,
-                        cpuTimeMS = statsMeasurement.CpuTime.TotalMilliseconds,
-                        cpuTimeUserMS = statsMeasurement.CpuTimeUser.TotalMilliseconds,
-                        cpuTimeKernelMS = statsMeasurement.CpuTimeKernel.TotalMilliseconds,
+                        status = timedOut ? "timeout" : "ok",
+                        timeoutSeconds = test.TimeoutSeconds,
+                        timeMS = timedOut ? (double?)null : statsMeasurement.Elapsed.TotalMilliseconds,
+                        timeStdDevMS = timedOut ? (double?)null : statsMeasurement.ElapsedStdDevMS,
+                        memBytes = timedOut ? (long?)null : statsMeasurement.PeakMemoryBytes,
+                        cpuTimeMS = timedOut ? (double?)null : statsMeasurement.CpuTime.TotalMilliseconds,
+                        cpuTimeUserMS = timedOut ? (double?)null : statsMeasurement.CpuTimeUser.TotalMilliseconds,
+                        cpuTimeKernelMS = timedOut ? (double?)null : statsMeasurement.CpuTimeKernel.TotalMilliseconds,
                         githubRunId = GithubActionUtils.RunId,
                         githubRepository = Environment.GetEnvironmentVariable("GITHUB_REPOSITORY"),
                         githubSha = Environment.GetEnvironmentVariable("GITHUB_SHA"),
