@@ -13,6 +13,16 @@ class Counter(object):
         self.value += 1
 
 def frequencies(sequence: bytes, k: int) -> dict[int, Counter]:
+    if k <= 6:
+        # Short keys fit in at most 4096 slots, so avoid hashing each base.
+        counters = [Counter(0) for _ in range(1 << (2 * k))]
+        mask = (1 << (2 * k)) - 1
+        key = 0
+        for i in range(len(sequence)):
+            key = ((key << 2) | ((sequence[i] >> 1) & 3)) & mask
+            if i >= k - 1:
+                counters[key].increment()
+        return {key: counter for key, counter in enumerate(counters) if counter.value != 0}
     counts: dict[int, Counter] = {}
     mask = (1 << (2 * k)) - 1
     key = 0
