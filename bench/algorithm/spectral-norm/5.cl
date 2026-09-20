@@ -35,8 +35,8 @@
 (define-inline eval-A (i j)
   (let* ((i+1   (f32.8+ i 1))
          (evala (f32.8+ (f32.8* (f32.8+ i j) (f32.8* (f32.8+ i+1 j) 0.5)) i+1)))
-    (values (f64.4-from-f32.4 (f32.8-extract128 evala 0))
-            (f64.4-from-f32.4 (f32.8-extract128 evala 1)))))
+    (values (f64.4-from-f32.4 (f32.4-from-f32.8 evala 0))
+            (f64.4-from-f32.4 (f32.4-from-f32.8 evala 1)))))
 
 (-> eval-A-times-u (boolean f64vec f64vec u32 u32 u32) null)
 (defun eval-A-times-u (transpose src dst begin end length)
@@ -100,7 +100,12 @@
     (loop repeat 10 do
       (eval-AtA-times-u u v tmp 0 n n)
       (eval-AtA-times-u v u tmp 0 n n))
-    (sqrt (f64/ (f64.4-vdot u v) (f64.4-vdot v v)))))
+    (loop with uv of-type f64 = 0d0
+          with vv of-type f64 = 0d0
+          for i of-type u32 below n
+          do (incf uv (* (aref u i) (aref v i)))
+             (incf vv (* (aref v i) (aref v i)))
+          finally (return (sqrt (/ uv vv))))))
 
 (defun main (&optional n-supplied)
   (let ((n (or n-supplied (parse-integer (or (car (last sb-ext:*posix-argv*))
