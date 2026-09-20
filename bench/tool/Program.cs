@@ -561,7 +561,7 @@ namespace BenchTool
                 {
                     using var cts = new CancellationTokenSource();
                     cts.CancelAfter(TimeSpan.FromSeconds(60));
-                    ProcessUtils.RunProcess(
+                    int exitCode = ProcessUtils.RunProcess(
                         runPsi,
                         printOnConsole: false,
                         asyncRead: false,
@@ -569,7 +569,7 @@ namespace BenchTool
                         out string stdErr,
                         env: langEnvConfig.RunCmdEnv,
                         token: cts.Token);
-                    if (StringComparer.Ordinal.Equals(expectedOutput.TrimEnd(), stdOut.TrimEnd()))
+                    if (exitCode == 0 && StringComparer.Ordinal.Equals(expectedOutput.TrimEnd(), stdOut.TrimEnd()))
                     {
                         Logger.Info($"Test Passed: {buildId}");
                         error = null;
@@ -578,6 +578,7 @@ namespace BenchTool
                     else
                     {
                         error = new Exception($"Test Failed: {buildId}"
+                            + $"\nExit code: {exitCode}"
                             + $"\nInput: {test.Input}"
                             + $"\nExpected output path: {expectedOutputPath}"
                             + $"\n Std Out:\n{stdOut}"
