@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plan the suite and reject incomplete benchmark artifacts."""
+"""Plan the suite and publish verified results from successful languages."""
 import json
 import math
 import os
@@ -130,6 +130,35 @@ def plan():
                 print(f'{key}={value}', file=out)
 
 
+def collect_results():
+    results = BENCH / 'build/_results'
+    available = sorted(p.name for p in results.iterdir() if p.is_dir()) if results.exists() else []
+    if set(available) - LANGUAGES.keys():
+        raise ValueError(f'Unexpected result languages: {set(available) - LANGUAGES.keys()}')
+    if not available:
+        raise ValueError('No successful languages to publish')
+    machines = set()
+    for language in available:
+        machines.update(verify(language, 'results'))
+    if len(machines) != 1:
+        raise ValueError('Results from different machines cannot be published together')
+    cpu, runner = next(iter(machines))
+    missing = sorted(LANGUAGES.keys() - set(available))
+    summary = dict(expectedLanguages=sorted(LANGUAGES), publishedLanguages=available,
+        missingLanguages=missing, cpuInfo=cpu, runnerName=runner,
+        githubSha=os.environ['GITHUB_SHA'], githubRunId=os.environ['GITHUB_RUN_ID'],
+        githubRepository=os.environ['GITHUB_REPOSITORY'])
+    (BENCH / 'build/run-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+    message = f'Publishing results for {len(available)} of {len(LANGUAGES)} languages.'
+    if missing:
+        message += f' Unavailable in this run: {", ".join(missing)}.'
+    print(message)
+    if os.environ.get('GITHUB_STEP_SUMMARY'):
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+            print(message, file=out)
+    return summary
+
+
 if __name__ == '__main__':
     configured = {config['lang'] for _, config in CONFIGS}
     if LANGUAGES.keys() != configured:
@@ -139,6 +168,8 @@ if __name__ == '__main__':
     command = sys.argv[1]
     if command == 'plan':
         plan()
+    elif command == 'collect-results':
+        collect_results()
     elif command == 'list':
         for language in LANGUAGES:
             print(f'{language}: {len(programs(language))} programs')

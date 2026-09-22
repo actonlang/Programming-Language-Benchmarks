@@ -8,6 +8,19 @@
         Benchmarks</a
       >
     </div>
+    <div v-if="benchmarkRun" class="bg-white p-4 mb-5 rounded text-base">
+      <p>
+        Results for {{ benchmarkRun.publishedLanguages.length }} of
+        {{ benchmarkRun.expectedLanguages.length }} languages from
+        <a :href="runUrl" class="underline text-blue-500">this run</a>
+        on {{ benchmarkRun.runnerName }}.
+      </p>
+      <p v-if="benchmarkRun.missingLanguages.length" class="mt-2">
+        Unavailable in this run:
+        {{ benchmarkRun.missingLanguages.join(', ') }}. Follow the run link for
+        failure details.
+      </p>
+    </div>
     <Nuxt />
   </div>
 </template>
@@ -17,5 +30,16 @@ import { Component, Vue } from 'nuxt-property-decorator'
 @Component({
   components: {},
 })
-export default class DefaultLayout extends Vue {}
+export default class DefaultLayout extends Vue {
+  get benchmarkRun(): BenchmarkRun | null {
+    return this.$config.benchmarkRun || null
+  }
+
+  get runUrl(): string {
+    const run = this.benchmarkRun
+    return run
+      ? `https://github.com/${run.githubRepository}/actions/runs/${run.githubRunId}`
+      : ''
+  }
+}
 </script>

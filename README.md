@@ -3,7 +3,7 @@
 Acton-maintained fork of [hanabi1224/Programming-Language-Benchmarks](https://github.com/hanabi1224/Programming-Language-Benchmarks).
 
 [Published results](https://actonlang.github.io/Programming-Language-Benchmarks/)
-compare every upstream language with Acton. Acton implements all 18 problems;
+compare upstream languages with Acton. Acton implements all 18 problems;
 other languages use the implementations enabled in the upstream configurations.
 
 ## Measurements
@@ -24,8 +24,8 @@ Each language uses its own container with the same harness and inputs. The
 container runs on the host CPU without CPU or process-count quotas. The wrapper holds
 `~/.local/state/acton-perf.lock` throughout setup, checking, and measurement.
 Other measurements on the host must use that lock. A manual language selection
-supports troubleshooting; only a complete run publishes the website. A new full
-run cancels an older full run, while normal pushes leave it running.
+supports troubleshooting; full-suite runs publish the languages that pass.
+A new full run cancels an older full run, while normal pushes leave it running.
 
 Container storage is isolated in `/var/lib/acton-bench-containers`. Unused
 benchmark containers are removed before each job, dangling images afterwards,
@@ -48,10 +48,14 @@ absolute path in the runner service environment, then restart the idle service.
 `.github/languages.json` selects all 39 upstream language entries and their
 primary toolchains, including WebAssembly. It does not select every historical
 compiler release or experimental backend. `.github/suite.py` requires every
-selected program to build, pass correctness checks, and produce every expected
-result before publication. A program that passes correctness checks but exceeds
-a measurement time limit is shown as a timeout, without timing or memory values.
-Crashes and incomplete repetitions fail the job. Toolchain versions, the container image ID, source
+selected program in a language to build, pass correctness checks, and produce
+every expected result before publishing that language. A program that passes
+correctness checks but exceeds a measurement time limit is shown as a timeout,
+without timing or memory values.
+Crashes and incomplete repetitions fail the language job. Other languages can
+still publish. The website lists unavailable languages and links to the run;
+the combined artifact includes this inventory in `run-summary.json`.
+Toolchain versions, the container image ID, source
 revision, and Actions run are recorded with the results.
 
 V uses its garbage-collected backend; the experimental autofree backend corrupts
@@ -116,13 +120,15 @@ NODE_OPTIONS=--openssl-legacy-provider SITE_BASE_PATH=/Programming-Language-Benc
 The generated site is in `website/dist`. `SITE_BASE_PATH` defaults to `/` for
 local development. All internal links and assets respect the configured prefix.
 The checked-in upstream data is only for website development and PR build checks;
-publishing replaces it completely with results from the successful benchmark run.
+publishing replaces it completely with verified results from the current run.
 
 The `bench` workflow measures weekly and on manual dispatch. Its
 `publish` job calls `site.yml`, which downloads that run's results, builds the
 website on a GitHub-hosted runner, and deploys it to GitHub Pages. Configure the
-repository's Pages publishing source as GitHub Actions. A failed build or
-measurement job leaves the previous published site in place.
+repository's Pages publishing source as GitHub Actions. Failed language jobs
+remain red in Actions while verified languages publish. If no language passes,
+result verification fails, or the run is cancelled, the previous site stays in
+place.
 
 ## Attribution
 

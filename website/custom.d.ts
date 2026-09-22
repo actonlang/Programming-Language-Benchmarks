@@ -5,6 +5,17 @@ declare module '*.vue' {
 
 type osType = 'linux' | 'osx' | 'windows'
 
+type BenchmarkRun = {
+  expectedLanguages: string[]
+  publishedLanguages: string[]
+  missingLanguages: string[]
+  runnerName: string
+  cpuInfo: string
+  githubRepository: string
+  githubRunId: string
+  githubSha: string
+}
+
 type BenchResult = {
   cpuInfo: string
   lang: string

@@ -27,13 +27,15 @@
             languages and their different compilers or runtime
           </p>
           <p class="pt-5">
-            All benchmark programs are measured sequentially in one CI job. Each
-            run records its machine and compiler versions. Compare numbers
-            within the same run, since GitHub-hosted hardware can change.
+            Benchmark programs are measured sequentially on a dedicated runner.
+            Each run records its machine and compiler versions. Compare numbers
+            within the same run.
           </p>
           <p class="pt-5">
-            Successful benchmark runs publish this website on GitHub Pages. Runs
-            happen on changes to main and weekly.
+            Measurements run weekly or on request. Languages that pass publish
+            their results on GitHub Pages, even when another language fails.
+            Missing languages are listed above. Code changes also run
+            correctness checks on GitHub-hosted runners.
           </p>
           <p class="pt-5 font-bold">Main goals:</p>
           <ul class="list-disc list-outside italic text-base">
