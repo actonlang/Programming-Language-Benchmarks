@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 using System.Security.Cryptography;
 using System.Text;
 
 public class MandelBrot
 {
-    private static readonly Vector<double> _threshold = new Vector<double>(4);
+    private static readonly Vector256<double> _threshold = Vector256.Create(4.0);
     public static void Main(string[] args)
     {
         var size = args.Length == 0 ? 200 : int.Parse(args[0]);
@@ -15,7 +15,7 @@ public class MandelBrot
         var inv = 2.0 / size;
         Console.WriteLine($"P4\n{size} {size}");
 
-        var xloc = new (Vector<double>, Vector<double>)[chunkSize];
+        var xloc = new (Vector256<double>, Vector256<double>)[chunkSize];
         Span<double> array = stackalloc double[8];
         for (var i = 0; i < chunkSize; i++)
         {
@@ -24,7 +24,7 @@ public class MandelBrot
             {
                 array[j] = (offset + j) * inv - 1.5;
             }
-            xloc[i] = (new Vector<double>(array.Slice(0, 4)), new Vector<double>(array.Slice(4, 4)));
+            xloc[i] = (Vector256.Create((ReadOnlySpan<double>)array.Slice(0, 4)), Vector256.Create((ReadOnlySpan<double>)array.Slice(4, 4)));
         }
 
         var data = new byte[size * chunkSize];
@@ -47,19 +47,19 @@ public class MandelBrot
         Console.WriteLine(ToHexString(hash));
     }
 
-    static byte mbrot8((Vector<double>, Vector<double>) cr, double civ)
+    static byte mbrot8((Vector256<double>, Vector256<double>) cr, double civ)
     {
-        var ci = new Vector<double>(new[] { civ, civ, civ, civ });
-        var zr0 = new Vector<double>(0);
-        var zr1 = new Vector<double>(0);
-        var zi0 = new Vector<double>(0);
-        var zi1 = new Vector<double>(0);
-        var tr0 = new Vector<double>(0);
-        var tr1 = new Vector<double>(0);
-        var ti0 = new Vector<double>(0);
-        var ti1 = new Vector<double>(0);
-        var absz0 = new Vector<double>(0);
-        var absz1 = new Vector<double>(0);
+        var ci = Vector256.Create(civ);
+        var zr0 = Vector256<double>.Zero;
+        var zr1 = Vector256<double>.Zero;
+        var zi0 = Vector256<double>.Zero;
+        var zi1 = Vector256<double>.Zero;
+        var tr0 = Vector256<double>.Zero;
+        var tr1 = Vector256<double>.Zero;
+        var ti0 = Vector256<double>.Zero;
+        var ti1 = Vector256<double>.Zero;
+        var absz0 = Vector256<double>.Zero;
+        var absz1 = Vector256<double>.Zero;
         for (var _i = 0; _i < 10; _i++)
         {
             for (var _j = 0; _j < 5; _j++)
@@ -80,7 +80,7 @@ public class MandelBrot
             }
             absz0 = tr0 + ti0;
             absz1 = tr1 + ti1;
-            if (Vector.GreaterThanAll(absz0, _threshold) && Vector.GreaterThanAll(absz1, _threshold))
+            if (Vector256.GreaterThanAll(absz0, _threshold) && Vector256.GreaterThanAll(absz1, _threshold))
             {
                 return 0;
             }
