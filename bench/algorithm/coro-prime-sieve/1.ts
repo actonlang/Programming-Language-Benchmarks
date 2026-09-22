@@ -12,6 +12,8 @@ async function* generate() {
 
 async function* filter(ch: AsyncGenerator, prime: number) {
     while (true) {
+        // Yield before calling upstream so long chains do not exhaust the stack.
+        await Promise.resolve();
         var i = (await ch.next()).value;
         if (i % prime != 0) {
             yield i;
