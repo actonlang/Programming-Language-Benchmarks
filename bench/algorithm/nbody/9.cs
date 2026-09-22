@@ -10,7 +10,7 @@ namespace nbody
     */
 
     using System;
-    using System.Numerics;
+    using System.Runtime.Intrinsics;
 
     public class NBody
     {
@@ -30,14 +30,14 @@ namespace nbody
 
     public class Body
     {
-        public Vector<double> Pos { get; set; }
-        public Vector<double> Velocity { get; set; }
+        public Vector256<double> Pos { get; set; }
+        public Vector256<double> Velocity { get; set; }
         public double Mass { get; }
 
         public Body(double x, double y, double z, double vx, double vy, double vz, double mass)
         {
-            Pos = new Vector<double>(new[] { x, y, z, 0 });
-            Velocity = new Vector<double>(new[] { vx, vy, vz, 0 });
+            Pos = Vector256.Create(x, y, z, 0);
+            Velocity = Vector256.Create(vx, vy, vz, 0);
             Mass = mass;
         }
     }
@@ -113,7 +113,7 @@ namespace nbody
 
         public void OffsetMomentum()
         {
-            var p = new Vector<double>(new[] { 0.0, 0.0, 0.0, 0.0 });
+            var p = Vector256<double>.Zero;
             foreach (var b in _bodies)
             {
                 p -= b.Velocity * b.Mass;
@@ -133,7 +133,7 @@ namespace nbody
                 {
                     var bj = _bodies[j];
                     var dpos = pos - bj.Pos;
-                    double d2 = Vector.Dot(dpos, dpos);
+                    double d2 = Vector256.Dot(dpos, dpos);
                     double mag = dt / (d2 * Math.Sqrt(d2));
                     dpos *= mag;
                     v -= dpos * bj.Mass;
@@ -150,12 +150,12 @@ namespace nbody
             for (int i = 0; i < bodyCount; i++)
             {
                 var bi = _bodies[i];
-                e += 0.5 * bi.Mass * Vector.Dot(bi.Velocity, bi.Velocity);
+                e += 0.5 * bi.Mass * Vector256.Dot(bi.Velocity, bi.Velocity);
                 for (int j = i + 1; j < bodyCount; j++)
                 {
                     var bj = _bodies[j];
                     var dpos = bi.Pos - bj.Pos;
-                    e -= (bi.Mass * bj.Mass) / Math.Sqrt(Vector.Dot(dpos, dpos));
+                    e -= (bi.Mass * bj.Mass) / Math.Sqrt(Vector256.Dot(dpos, dpos));
                 }
             }
             return e;
