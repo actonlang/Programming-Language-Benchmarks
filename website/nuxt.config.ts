@@ -1,14 +1,22 @@
+import { existsSync, readFileSync } from 'fs'
+import { resolve } from 'path'
 import { NuxtConfig } from '@nuxt/types'
 import { $content } from '@nuxt/content'
 import _ from 'lodash'
 import { getLangBenchResults } from './contentUtils'
 
 const basePath = process.env.SITE_BASE_PATH || '/'
+const runSummaryPath = resolve(__dirname, '../bench/build/run-summary.json')
 
 const config: NuxtConfig = {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
   ssr: true,
+  publicRuntimeConfig: {
+    benchmarkRun: existsSync(runSummaryPath)
+      ? JSON.parse(readFileSync(runSummaryPath, 'utf8'))
+      : null,
+  },
   loading: {
     color: 'cyan',
   },

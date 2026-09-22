@@ -26,9 +26,11 @@ class SuiteTests(unittest.TestCase):
             buildLog={'finished': 'today'}, testLog={'finished': 'today'},
             githubSha='current', githubRunId='123', githubRepository='owner/repo')
         for mock in [patch.object(suite, 'BENCH', self.root),
+                     patch.object(suite, 'LANGUAGES', {'fixture': {}, 'missing': {}}),
                      patch.object(suite, 'programs', return_value={'fixture': ('sample', '1.sh', 'sh', '1')}),
                      patch.object(suite, 'PROBLEMS', {'sample': {'tests': [{'input': 'small'}, {'input': 'large'}]}}),
-                     patch.dict(os.environ, GITHUB_SHA='current', GITHUB_RUN_ID='123', GITHUB_REPOSITORY='owner/repo')]:
+                     patch.dict(os.environ, GITHUB_SHA='current', GITHUB_RUN_ID='123',
+                                GITHUB_REPOSITORY='owner/repo', GITHUB_STEP_SUMMARY='')]:
             mock.start()
             self.addCleanup(mock.stop)
         self.write_records()
@@ -75,6 +77,42 @@ class SuiteTests(unittest.TestCase):
     def test_ignored_build_failure_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'Missing build output'):
             suite.verify('fixture', 'build')
+
+    def test_failed_language_does_not_block_verified_results(self):
+        summary = suite.collect_results()
+        self.assertEqual(summary['publishedLanguages'], ['fixture'])
+        self.assertEqual(summary['missingLanguages'], ['missing'])
+        self.assertEqual(summary['githubRunId'], '123')
+        self.assertEqual(json.loads((self.root / 'build/run-summary.json').read_text()), summary)
+
+    def test_partial_artifact_is_still_rejected(self):
+        (self.results / 'fixture_large.json').unlink()
+        with self.assertRaisesRegex(ValueError, 'missing='):
+            suite.collect_results()
+        self.assertFalse((self.root / 'build/run-summary.json').exists())
+
+    def test_partial_publication_rejects_stale_results(self):
+        self.record['githubRunId'] = 'old run'
+        self.write_records()
+        with self.assertRaisesRegex(ValueError, 'Wrong githubRunId'):
+            suite.collect_results()
+
+    def test_no_results_cannot_replace_the_site(self):
+        for path in self.results.iterdir():
+            path.unlink()
+        self.results.rmdir()
+        with self.assertRaisesRegex(ValueError, 'No successful languages'):
+            suite.collect_results()
+
+    def test_publication_rejects_different_language_machines(self):
+        other = self.results.parent / 'missing'
+        other.mkdir()
+        for path in self.results.iterdir():
+            record = json.loads(path.read_text())
+            record.update(lang='missing', runnerName='another runner')
+            (other / path.name).write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, 'different machines'):
+            suite.collect_results()
 
 
 if __name__ == '__main__':

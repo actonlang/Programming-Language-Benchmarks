@@ -86,7 +86,7 @@ jobs:
 
   results:
     needs: [plan, language]
-    if: needs.plan.outputs.publish == 'true'
+    if: ${{ !cancelled() && needs.plan.outputs.publish == 'true' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -96,20 +96,22 @@ jobs:
           pattern: benchmark-results-*
           merge-multiple: true
           path: bench/build
-      - name: Require complete results from this revision and run
-        run: /usr/bin/python3 .github/suite.py verify-results all
+      - name: Verify successful languages and record missing results
+        run: /usr/bin/python3 .github/suite.py collect-results
       - uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: |
             bench/build/_results/
             bench/build/environment-*.txt
+            bench/build/run-summary.json
           if-no-files-found: error
           retention-days: 90
           overwrite: true
 
   publish:
     needs: results
+    if: ${{ !cancelled() && needs.results.result == 'success' }}
     permissions:
       contents: read
       pages: write
