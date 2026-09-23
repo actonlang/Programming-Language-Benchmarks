@@ -3,14 +3,38 @@
 
 import file
 
-def frequencies(sequence: bytes, k: int) -> dict[int, int]:
-    counts: dict[int, int] = {}
+# Keep the count unboxed; updating an int in a list/dict allocates today.
+# TODO: Drop this workaround when Acton can update those ints unboxed.
+class StupidBox(object):
+    value: int
+
+    def __init__(self, value: int):
+        self.value = value
+
+def frequencies(sequence: bytes, k: int) -> dict[int, StupidBox]:
+    if k <= 6:
+        # Short keys fit in at most 4096 slots, so avoid hashing each base.
+        # TODO: Recheck this extra path once Acton's integer hashing stops
+        # allocating temporary objects.
+        counters = [StupidBox(0) for _ in range(1 << (2 * k))]
+        mask = (1 << (2 * k)) - 1
+        key = 0
+        for i in range(len(sequence)):
+            key = ((key << 2) | ((sequence[i] >> 1) & 3)) & mask
+            if i >= k - 1:
+                counters[key].value += 1
+        return {key: counter for key, counter in enumerate(counters) if counter.value != 0}
+    counts: dict[int, StupidBox] = {}
     mask = (1 << (2 * k)) - 1
     key = 0
     for i in range(len(sequence)):
         key = ((key << 2) | ((sequence[i] >> 1) & 3)) & mask
         if i >= k - 1:
-            counts[key] = counts[key] + 1 if key in counts else 1
+            counter = counts.get(key)
+            if counter is not None:
+                counter.value += 1
+            else:
+                counts[key] = StupidBox(1)
     return counts
 
 def compress(text: str) -> int:
@@ -43,12 +67,12 @@ actor main(env):
     sequence = b"".join(parts)
     for k in [1, 2]:
         counts = frequencies(sequence, k)
-        rows = [(-count, decompress(key, k)) for key, count in counts.items()]
+        rows = [(-count.value, decompress(key, k)) for key, count in counts.items()]
         for negative_count, text in sorted(rows):
             print("%s %.3f" % (text, -100.0 * float(negative_count) / float(len(sequence) - k + 1)))
         print("")
     for text in ["GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT"]:
         counts = frequencies(sequence, len(text))
         key = compress(text)
-        print("%d\t%s" % (counts[key] if key in counts else 0, text))
+        print("%d\t%s" % (counts[key].value if key in counts else 0, text))
     env.exit(0)

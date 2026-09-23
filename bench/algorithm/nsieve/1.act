@@ -1,13 +1,19 @@
 #!/usr/bin/env runacton
 
 def nsieve(n: int):
-    count = 0
-    flags = [True] * n
-    for i in range(2, n, 1):
-        if flags[i]:
-            count += 1
-            for j in range(i, n, i):
-                flags[j] = False
+    flags = bytearray(b"\x01" * n)
+    if n > 0:
+        flags[0] = 0
+    if n > 1:
+        flags[1] = 0
+    i = 2
+    while i * i < n:
+        if flags[i] != 0:
+            start = i * i
+            # TODO: Retry a plain loop once bytearray stores avoid boxing.
+            flags[start:n:i] = b"\x00" * ((n - 1 - start) // i + 1)
+        i += 1
+    count = flags.count(bytearray(b"\x01"))
     n_s = ""
     for j in range(0, (8-(len(str(n)))), 1):
         n_s += " "
