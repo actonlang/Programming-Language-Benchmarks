@@ -3,10 +3,16 @@ import _ from 'lodash'
 import findVersions from 'find-versions'
 
 const lang2Display: { [key: string]: string } = {
+  acton: 'acton',
+  'acton-tip': 'acton tip',
   csharp: 'C#',
   cpp: 'C++',
   hacklang: 'Hack',
   ocaml: 'OCaml',
+}
+
+export function getLangDisplayName(lang: string): string {
+  return lang2Display[lang] ?? _.capitalize(lang)
 }
 
 export async function getLangBenchResults($content: contentFunc) {
@@ -39,7 +45,7 @@ export function mergeLangBenchResults(
     console.log(`${k}: ${benches.length} benchmark results`)
     r.push({
       lang: k,
-      langDisplay: lang2Display[k] ?? _.capitalize(k),
+      langDisplay: getLangDisplayName(k),
       benchmarks: benches,
     })
   }
@@ -54,6 +60,9 @@ export function getFullCompilerVersion(i: BenchResult) {
 }
 
 export function getRealShortCompilerVersion(i: BenchResult) {
+  if (i.lang === 'acton' || i.lang === 'acton-tip') {
+    return i.buildLog?.compilerVersion?.trim() || 'unknown'
+  }
   const full = getFullCompilerVersion(i)
   const versions = findVersions(full, { loose: true })
   if (versions && versions.length > 0) {

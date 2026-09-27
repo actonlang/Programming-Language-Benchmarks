@@ -1,5 +1,6 @@
 {
   "acton": {"compilers": ["acton"]},
+  "acton-tip": {"compilers": ["acton"]},
   "c": {"compilers": ["clang", "gcc"]},
   "chapel": {"image": "docker.io/chapel/chapel:2.9.0", "compilers": ["chpl"]},
   "codon": {"compilers": ["codon"]},

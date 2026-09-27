@@ -21,8 +21,14 @@ rust() {
 }
 
 case "$language" in
-  acton)
-    archive https://github.com/actonlang/acton/releases/download/tip/acton-linux-x86_64-tip.tar.xz /opt/acton
+  acton|acton-tip)
+    if [[ "$language" == acton ]]; then
+      url="$(curl --fail --location --retry 3 https://api.github.com/repos/actonlang/acton/releases/latest |
+        jq -er '.assets[] | select(.name | test("^acton-linux-x86_64-[0-9].*\\.tar\\.xz$")) | .browser_download_url')"
+    else
+      url=https://github.com/actonlang/acton/releases/download/tip/acton-linux-x86_64-tip.tar.xz
+    fi
+    archive "$url" /opt/acton
     chown -R "$BENCH_UID" /opt/acton
     ln -s /opt/acton/bin/acton /usr/local/bin/acton
     ;;

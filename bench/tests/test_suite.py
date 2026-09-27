@@ -14,6 +14,30 @@ suite = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(suite)
 
 
+class ActonChannelTests(unittest.TestCase):
+    def test_channels_have_separate_results_for_the_same_programs(self):
+        stable = suite.programs('acton')
+        tip = suite.programs('acton-tip')
+        self.assertTrue(stable)
+        self.assertTrue(stable.keys().isdisjoint(tip))
+        self.assertEqual({p[:3] for p in stable.values()}, {p[:3] for p in tip.values()})
+        self.assertEqual({p[3] for p in stable.values()}, {'latest'})
+        self.assertEqual({p[3] for p in tip.values()}, {'tip'})
+
+    def test_source_change_checks_both_channels(self):
+        output = io.StringIO()
+        with patch.dict(os.environ, GITHUB_EVENT_NAME='pull_request',
+                        BASE_SHA='a' * 40, HEAD_SHA='b' * 40,
+                        REQUESTED_LANGUAGES='', REQUESTED_MODE='', GITHUB_OUTPUT=''), \
+                patch.object(suite.subprocess, 'check_output',
+                             return_value='bench/algorithm/nsieve/1.act\n'), \
+                contextlib.redirect_stdout(output):
+            suite.plan()
+        plan = json.loads(output.getvalue())
+        self.assertEqual(json.loads(plan['languages']), ['acton', 'acton-tip'])
+        self.assertEqual(plan['measure'], 'false')
+
+
 class SuiteTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
