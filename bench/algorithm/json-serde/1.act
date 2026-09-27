@@ -4,6 +4,10 @@ import crypto.hash.md5
 import file
 import json
 
+def checksum(data: bytes) -> str:
+    # TODO: Use bytes.hex() once stable Acton includes its string terminator fix.
+    return "".join([hex(b)[2:].zfill(2) for b in crypto.hash.md5.hash(data)])
+
 actor main(env):
     name = env.argv[1] if len(env.argv) > 1 else "sample"
     n = int(env.argv[2]) if len(env.argv) > 2 else 3
@@ -11,9 +15,9 @@ actor main(env):
     text = source.read().decode().lstrip("\ufeff")
     source.close()
     obj = json.decode(text)
-    print(crypto.hash.md5.hash(json.encode(obj).encode()).hex())
+    print(checksum(json.encode(obj).encode()))
     objects: list[?value] = []
     for _ in range(n):
         objects.append(json.decode(text))
-    print(crypto.hash.md5.hash(json.encode_list(objects).encode()).hex())
+    print(checksum(json.encode_list(objects).encode()))
     env.exit(0)
