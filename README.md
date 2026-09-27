@@ -62,8 +62,8 @@ V uses its garbage-collected backend; the experimental autofree backend corrupts
 big-integer calculations in the digit benchmarks.
 
 Native compiler optimizations target the CPU running the benchmark. Acton uses
-release optimization for both the latest stable release ("acton") and the latest
-published development build ("acton tip"). Both use the same source files and
+release optimization for both the latest stable release ("Acton") and the latest
+published development build ("Acton tip"). Both use the same source files and
 inputs in separate jobs, with full compiler versions shown on the site.
 A failure in one build does not prevent the other from publishing.
 Use `acton-tip` to select the development build in workflow inputs or local

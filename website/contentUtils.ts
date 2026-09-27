@@ -3,8 +3,8 @@ import _ from 'lodash'
 import findVersions from 'find-versions'
 
 const lang2Display: { [key: string]: string } = {
-  acton: 'acton',
-  'acton-tip': 'acton tip',
+  acton: 'Acton',
+  'acton-tip': 'Acton tip',
   csharp: 'C#',
   cpp: 'C++',
   hacklang: 'Hack',
