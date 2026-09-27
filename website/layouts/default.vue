@@ -17,8 +17,7 @@
       </p>
       <p v-if="benchmarkRun.missingLanguages.length" class="mt-2">
         Unavailable in this run:
-        {{ benchmarkRun.missingLanguages.join(', ') }}. Follow the run link for
-        failure details.
+        {{ missingLanguages }}. Follow the run link for failure details.
       </p>
     </div>
     <Nuxt />
@@ -27,12 +26,19 @@
 
 <script lang="ts">
 import { Component, Vue } from 'nuxt-property-decorator'
+import { getLangDisplayName } from '~/contentUtils'
 @Component({
   components: {},
 })
 export default class DefaultLayout extends Vue {
   get benchmarkRun(): BenchmarkRun | null {
     return this.$config.benchmarkRun || null
+  }
+
+  get missingLanguages(): string {
+    return (this.benchmarkRun?.missingLanguages || [])
+      .map(getLangDisplayName)
+      .join(', ')
   }
 
   get runUrl(): string {

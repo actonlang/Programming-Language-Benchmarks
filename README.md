@@ -45,9 +45,9 @@ Measurement jobs update the installed hook. For initial setup on `actest1`, copy
 `ACTIONS_RUNNER_HOOK_JOB_STARTED` and `ACTIONS_RUNNER_HOOK_JOB_COMPLETED` to that
 absolute path in the runner service environment, then restart the idle service.
 
-`.github/languages.json` selects all 39 upstream language entries and their
-primary toolchains, including WebAssembly. It does not select every historical
-compiler release or experimental backend. `.github/suite.py` requires every
+`.github/languages.json` selects 40 entries, including separate stable and tip
+Acton builds, and their primary toolchains, including WebAssembly. It does not
+select every historical compiler release or experimental backend. `.github/suite.py` requires every
 selected program in a language to build, pass correctness checks, and produce
 every expected result before publishing that language. A program that passes
 correctness checks but exceeds a measurement time limit is shown as a timeout,
@@ -62,8 +62,13 @@ V uses its garbage-collected backend; the experimental autofree backend corrupts
 big-integer calculations in the digit benchmarks.
 
 Native compiler optimizations target the CPU running the benchmark. Acton uses
-release optimization and the current tip compiler. Go uses one 1.26 toolchain
-throughout the job; dependencies cannot silently select another compiler.
+release optimization for both the latest stable release ("acton") and the latest
+published development build ("acton tip"). Both use the same source files and
+inputs in separate jobs, with full compiler versions shown on the site.
+A failure in one build does not prevent the other from publishing.
+Use `acton-tip` to select the development build in workflow inputs or local
+commands. Go uses one 1.26 toolchain throughout the job; dependencies cannot
+silently select another compiler.
 
 ## Running locally
 
