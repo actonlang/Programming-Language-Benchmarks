@@ -13,6 +13,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     MIX_ENV=prod
 COPY --from=dotnet /usr/share/dotnet /opt/dotnet
 ENV PATH=/opt/dotnet:/opt/bench-home/.cargo/bin:/opt/bench-home/.nimble/bin:/opt/bench-home/.bun/bin:/opt/bench-home/.deno/bin:/opt/bench-home/.wasmtime/bin:/opt/bench-home/.codon/bin:/opt/bench-home/.local/share/ponyup/bin:${PATH}
+ARG BENCH_LANGUAGE
+# HHVM is already installed. Its obsolete apt source has an expired certificate.
+RUN if [ "$BENCH_LANGUAGE" = hacklang ]; then \
+      sed -i '\|https://dl.hhvm.com/ubuntu|d' /etc/apt/sources.list; \
+    fi
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash build-essential ca-certificates clang cmake curl file git jq \
     libgc-dev libgmp-dev libicu-dev libomp-dev libssl-dev libunwind-dev \
@@ -22,7 +27,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && chmod 1777 /opt/bench-home \
     && echo 'ALL ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/benchmark \
     && chmod 440 /etc/sudoers.d/benchmark
-ARG BENCH_LANGUAGE
 ARG BENCH_UID=1000
 LABEL org.actonlang.benchmarks=true
 COPY setup-language.sh /opt/setup-language.sh
