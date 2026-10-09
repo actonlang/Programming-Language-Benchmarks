@@ -5,6 +5,11 @@ mode="${1:?check or measure}"
 language="${2:?language}"
 [[ "$mode" == check || "$mode" == measure ]]
 toolchain_image="$(python3 -c 'import json,sys; print(json.load(open(".github/languages.json"))[sys.argv[1]].get("image", "mcr.microsoft.com/dotnet/sdk:9.0-noble"))' "$language")"
+acton_programs=""
+if [[ "$language" == acton || "$language" == acton-tip ]]; then
+  acton_programs="$(bash .github/acton-programs.sh)"
+  echo "$acton_programs"
+fi
 
 mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}"
 exec 9>"${XDG_STATE_HOME:-$HOME/.local/state}/acton-perf.lock"
@@ -58,3 +63,6 @@ echo "::endgroup::"
 
 "${engine[@]}" image inspect "$image" --format '{{.Id}}' \
   >> "bench/build/environment-${language}.txt" 9>&-
+if [[ -n "$acton_programs" ]]; then
+  echo "$acton_programs" >> "bench/build/environment-${language}.txt"
+fi

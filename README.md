@@ -70,6 +70,18 @@ Use `acton-tip` to select the development build in workflow inputs or local
 commands. Go uses one 1.26 toolchain throughout the job; dependencies cannot
 silently select another compiler.
 
+The Acton programs are maintained in `test/perf-benchgames` of the
+[Acton repository](https://github.com/actonlang/acton). Before building, both
+Acton jobs run `.github/acton-programs.sh`. It gives each problem in
+`bench/algorithm` exactly the `.act` files of the same problem directory at the
+Acton `tip` tag, the commit of the published development build. The `source`
+lists in `bench/bench_acton.yaml` and `bench/bench_acton_tip.yaml` still choose
+which programs to build. The job records the Acton commit in its environment
+file. A program that needs a newer compiler than the latest release fails the
+stable Acton job, so that run has no stable Acton results. `ACTON_REPO` and
+`ACTON_REF` select another source, for example a branch in a local Acton
+checkout: `ACTON_REPO=file:///path/to/acton ACTON_REF=my-branch`.
+
 ## Running locally
 
 Install .NET 9 and the compilers or runtimes you want to compare. Run commands
@@ -86,6 +98,9 @@ dotnet run --no-launch-profile -c Release --project tool -- --task bench --langs
 # Select a particular runtime and problem.
 dotnet run --no-launch-profile -c Release --project tool -- --task build --langs python --compilers cpython --problems binarytrees --no-docker
 ```
+
+Run `bash .github/acton-programs.sh` first to build the Acton programs from the
+Acton repository instead of the copies in `bench/algorithm`.
 
 `bench/bench.yaml` defines the inputs and expected outputs. Language configurations
 are in `bench/bench_*.yaml`. `--no-docker` uses locally installed compilers instead
