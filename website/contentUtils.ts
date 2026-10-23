@@ -97,6 +97,10 @@ export function getBuildLogUrl(i: BenchResult): string {
 }
 
 export function getSourceUrl(i: BenchResult): string {
+  if (i.lang === 'acton' || i.lang === 'acton-tip') {
+    // The Acton programs are maintained in the Acton repository.
+    return `https://github.com/actonlang/acton/blob/tip/test/perf-benchgames/${i.test}/${i.code}`
+  }
   const repository =
     i.githubRepository || 'hanabi1224/Programming-Language-Benchmarks'
   const revision = i.githubSha || 'main'

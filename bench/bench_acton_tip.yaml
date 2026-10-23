@@ -1,6 +1,6 @@
-# The programs come from test/perf-benchgames in the Acton repository:
-# .github/acton-programs.sh copies their .act files into bench/algorithm before
-# each run. A program is built only when it is listed under source.
+# The programs come from test/perf-benchgames in the Acton repository. Before
+# each run, .github/acton-programs.sh copies their .act files into
+# bench/algorithm and lists each of them under source here.
 lang: acton-tip
 problems:
   - name: binarytrees

@@ -34,10 +34,16 @@ jobs:
       has_work: ${{ steps.plan.outputs.has_work }}
       measure: ${{ steps.plan.outputs.measure }}
       publish: ${{ steps.plan.outputs.publish }}
+      acton_commit: ${{ steps.acton.outputs.commit }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Pick the Acton programs for this run
+        id: acton
+        run: |
+          tip="$(git ls-remote --exit-code https://github.com/actonlang/acton.git refs/tags/tip)"
+          echo "commit=${tip%%[[:space:]]*}" >> "$GITHUB_OUTPUT"
       - run: sudo apt-get update && sudo apt-get install -y python3-yaml
       - id: plan
         env:
@@ -71,6 +77,8 @@ jobs:
         if: needs.plan.outputs.measure == 'true' && runner.name == 'actest1'
         run: sudo install -D -m 755 .github/runner-cleanup.sh /opt/actest1/runner-cleanup.sh
       - name: Build and check programs, then measure when requested
+        env:
+          ACTON_REF: ${{ needs.plan.outputs.acton_commit }}
         run: bash .github/run-language.sh '${{ needs.plan.outputs.measure == 'true' && 'measure' || 'check' }}' '${{ matrix.language }}'
       - name: Preserve results
         if: needs.plan.outputs.measure == 'true'
@@ -96,6 +104,10 @@ jobs:
           pattern: benchmark-results-*
           merge-multiple: true
           path: bench/build
+      - name: Use the Acton programs of this run
+        env:
+          ACTON_REF: ${{ needs.plan.outputs.acton_commit }}
+        run: bash .github/acton-programs.sh
       - name: Verify successful languages and record missing results
         run: /usr/bin/python3 .github/suite.py collect-results
       - uses: actions/upload-artifact@v4

@@ -70,17 +70,20 @@ Use `acton-tip` to select the development build in workflow inputs or local
 commands. Go uses one 1.26 toolchain throughout the job; dependencies cannot
 silently select another compiler.
 
-The Acton programs are maintained in `test/perf-benchgames` of the
-[Acton repository](https://github.com/actonlang/acton). Before building, both
-Acton jobs run `.github/acton-programs.sh`. It gives each problem in
-`bench/algorithm` exactly the `.act` files of the same problem directory at the
-Acton `tip` tag, the commit of the published development build. The `source`
-lists in `bench/bench_acton.yaml` and `bench/bench_acton_tip.yaml` still choose
-which programs to build. The job records the Acton commit in its environment
-file. A program that needs a newer compiler than the latest release fails the
-stable Acton job, so that run has no stable Acton results. `ACTON_REPO` and
-`ACTON_REF` select another source, for example a branch in a local Acton
-checkout: `ACTON_REPO=file:///path/to/acton ACTON_REF=my-branch`.
+The Acton programs are maintained in `test/perf-benchgames` of the [Acton
+repository](https://github.com/actonlang/acton). Before building, both Acton
+jobs run `.github/acton-programs.sh`. It gives each problem in `bench/algorithm`
+exactly the `.act` files of the same problem directory in the Acton repository
+and lists each of them as a source in `bench/bench_acton.yaml` and
+`bench/bench_acton_tip.yaml`, so every Acton program is built and measured. The
+plan job picks the commit at the Acton `tip` tag, the commit of the published
+development build, and every job of the run uses the programs of that commit.
+Each Acton job records the commit in its environment file. The site links Acton
+programs to the Acton repository at the `tip` tag. A program that needs a newer
+compiler than the latest release fails the stable Acton job, so that run has no
+stable Acton results. `ACTON_REPO` and `ACTON_REF` select another source, for
+example a branch in a local Acton checkout: `ACTON_REPO=file:///path/to/acton
+ACTON_REF=my-branch`.
 
 ## Running locally
 
